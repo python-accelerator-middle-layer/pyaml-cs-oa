@@ -1,0 +1,77 @@
+[project]
+name = "pyaml-cs-oa"
+description = "PyAML control system plugin for ophyd-async"
+readme = "README.md"
+requires-python = ">=3.11"
+dynamic = ["version"]
+#license = {file = "LICENSE"}
+keywords = ["Accelerator", "Synchrotron", "Operation", "Tuning", "Digital Twin", "Commissioning", "EPICS", "Tango" ]
+maintainers = [
+    {name = "Yoshiteru Hidaka", email = "yhidaka@bnl.gov"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+# Base dependencies (common to all installs)
+dependencies = [
+    "pyaml",
+    "pydantic>=2.0",
+    "ophyd-async",
+]
+
+[project.optional-dependencies]
+
+# Optional EPICS support
+epics = ["ophyd-async[ca,pva]"]
+
+# Optional Tango support
+tango = ["ophyd-async[tango]"]
+
+# Developer-only dependencies
+dev = [
+    "ophyd-async[ca,pva]",
+    "ophyd-async[tango]",
+    "pre-commit",
+    "ruff",
+    "mypy",
+    "pytest",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+# Basic, sane default set: pycodestyle (E,W), pyflakes (F),
+# bugbear (B), imports (I), etc.
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "B",  # flake8-bugbear
+    "I",  # isort-style import sorting
+]
+ignore = [
+    "E203",  # so it's compatible with black-style formatting
+    "F401",  # unused imports
+    "F841",  # unused local variables
+]
+
+[tool.ruff.format]
+line-ending = "lf"
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
