@@ -1,11 +1,30 @@
-from pyaml.control.signal.pool import SignalContainerPool
+from dataclasses import dataclass
+import json
+import hashlib
+from pydantic import BaseModel
 
 from .container import OAReadback as Readback
 from .container import OASetpoint as Setpoint
 from .types import ControlSysConfig
 
+def get_pydantic_model_hash(model: BaseModel) -> str:
 
-class OASignalContainerPool(SignalContainerPool):
+    d = model.model_dump(mode="json")
+    data_bytes = json.dumps(d, sort_keys=True, indent=None).encode()
+
+    h = hashlib.sha256(data_bytes).hexdigest()[:16]
+    return h
+
+@dataclass(frozen=True)
+class _ContainerKey:
+    cs_name: str
+    cfg_hash: str
+
+class OASignalContainerPool():
+
+    def __init__(self):
+        self._cache: dict[_ContainerKey, tuple[Setpoint | None, Readback | None]] = {}
+
     def _create_setpoint_readback(
         self, cs_name: str, cs_cfg: ControlSysConfig
     ) -> tuple[Setpoint | None, Readback | None]:
@@ -35,6 +54,9 @@ class OASignalContainerPool(SignalContainerPool):
         self._cache[key] = (setpoint, readback)
 
         return setpoint, readback
+
+    def _key(self, cs_name: str, cs_cfg: ControlSysConfig) -> _ContainerKey:
+        return _ContainerKey(cs_name, get_pydantic_model_hash(cs_cfg))
 
 
 global_pool = OASignalContainerPool()

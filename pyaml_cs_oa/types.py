@@ -14,15 +14,11 @@ class EpicsConfigRW(EpicsConfigR, EpicsConfigW):
 
 
 class TangoConfigR(BaseModel):
-    read_attr: str
+    attribute: str
 
 
-class TangoConfigW(BaseModel):
-    write_attr: str
-
-
-class TangoConfigRW(TangoConfigR, TangoConfigW):
-    pass
+class TangoConfigRW(BaseModel):
+    attribute: str
 
 
 ControlSysConfig = (
@@ -30,6 +26,5 @@ ControlSysConfig = (
     | EpicsConfigW
     | EpicsConfigRW
     | TangoConfigR
-    | TangoConfigW
     | TangoConfigRW
 )

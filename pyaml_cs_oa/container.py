@@ -9,11 +9,10 @@ from ophyd_async.core import (
     SignalW,
     set_and_wait_for_other_value,
 )
-from pyaml.control.signal import arun
-from pyaml.control.signal.container import Readback, Setpoint
 
 T = TypeVar("T")
 
+from . import arun
 
 def _looks_disconnected(exc: BaseException) -> bool:
     # Keep it generic: ophyd-async wraps cancellations in TimeoutError;
@@ -46,11 +45,11 @@ async def _recover_once(
             raise
 
 
-class OAReadback(Readback):
+class OAReadback():
     """A readback object."""
 
     def __init__(self, r_signal: SignalR[SignalDatatypeT]):
-        super().__init__(r_signal)
+        self._r_sig = r_signal
 
     async def _run_get(self) -> SignalDatatypeT:
         await self._r_sig.connect()
@@ -76,14 +75,19 @@ class OAReadback(Readback):
             getattr(self._r_sig, "__rebuild__", None),
         )
 
+    def get(self) -> SignalDatatypeT:
+        """Synchronous wrapper around `async_get()`."""
+        return arun(self.async_get())
 
-class OASetpoint(Setpoint):
+class OASetpoint():
     def __init__(
         self,
         w_signal: SignalW[SignalDatatypeT],
         r_signal: SignalR[SignalDatatypeT] | None = None,
     ):
-        super().__init__(w_signal, r_signal=r_signal)
+        self._w_sig = w_signal
+        self._r_sig = r_signal # used only for `set_and_wait()`
+        self._has_r_sig = (r_signal is not None)
 
     async def _run_get(self) -> SignalDatatypeT:
         await self._w_sig.connect()
@@ -146,3 +150,16 @@ class OASetpoint(Setpoint):
             self._reconnect_both,
             self._rebuild_both,
         )
+
+    async def _complete_set(self, value):
+            status = await self.async_set(value)
+            await status  # Wait for completion before returning
+            return status
+
+    def set(self, value):
+        """Synchronous wrapper around `async_set()`."""
+        return arun(self._complete_set(value))
+
+    def set_and_wait(self, value) -> None:
+        """Synchronous wrapper around `async_set_and_wait()`."""
+        return arun(self.async_set_and_wait(value))
