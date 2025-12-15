@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 from .types import (
     EpicsConfigR,
+    EpicsConfigW,
     EpicsConfigRW,
     TangoConfigR,
     TangoConfigRW,
@@ -45,7 +46,7 @@ class ConfigModel(BaseModel):
     name: str
     prefix: str = ""
     debug_level: str=None
-    scalar_aggregator: str | None = "pyaml_cs_oa.scalar_aggreagtor"
+    scalar_aggregator: str | None = "pyaml_cs_oa.scalar_aggregator"
     vector_aggregator: str | None = None
     timeout_ms: int = 3000
 
@@ -84,6 +85,10 @@ class OphydAsyncControlSystem(ControlSystem):
                     nr = self.__newref(d)
                     key = self._cfg.prefix + d._cfg.read_pvname
                     nr._cfg.read_pvname = key
+                elif isinstance(d._cfg,EpicsConfigW):
+                    nr = self.__newref(d)
+                    key = self._cfg.prefix + d._cfg.write_pvname
+                    nr._cfg.write_pvname = key
                 elif isinstance(d._cfg,EpicsConfigRW):
                     nr = self.__newref(d)
                     key = self._cfg.prefix + d._cfg.read_pvname + d._cfg.write_pvname
@@ -97,6 +102,7 @@ class OphydAsyncControlSystem(ControlSystem):
                     raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(d._cfg)}")
 
                 if key not in self.__devices:
+                    nr.connect(self._cfg.timeout_ms)
                     self.__devices[key] = nr
                 newDevs.append(self.__devices[key])
             else:

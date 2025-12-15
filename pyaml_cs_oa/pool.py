@@ -26,9 +26,12 @@ class OASignalContainerPool():
         self._cache: dict[_ContainerKey, tuple[Setpoint | None, Readback | None]] = {}
 
     def _create_setpoint_readback(
-        self, cs_name: str, cs_cfg: ControlSysConfig
+        self, cs_name: str, cs_cfg: ControlSysConfig, timeout_ms:int
     ) -> tuple[Setpoint | None, Readback | None]:
+
         key = self._key(cs_name, cs_cfg)
+        if key in self._cache:
+            return self._cache[key]
 
         # Lazily construct using your existing backend helpers
         if cs_name == "tango":
@@ -40,14 +43,14 @@ class OASignalContainerPool():
 
         # Install a rebuild hook the recovery code can call
         def _rebuild():
-            new_SP, new_RB = get_SP_RB(cs_cfg)
+            new_SP, new_RB = get_SP_RB(cs_cfg,timeout_ms)
             self._cache[key] = (new_SP, new_RB)
             # carry the hook forward
             for v in (new_SP, new_RB):
                 if v is not None:
                     v.__rebuild__ = _rebuild
 
-        setpoint, readback = get_SP_RB(cs_cfg)
+        setpoint, readback = get_SP_RB(cs_cfg,timeout_ms)
         for v in (setpoint, readback):
             if v is not None:
                 v.__rebuild__ = _rebuild

@@ -14,7 +14,7 @@ from .types import (
 )
 
 
-def get_SP_RB(cfg: ControlSysConfig) -> tuple[Setpoint | None, Readback | None]:
+def get_SP_RB(cfg: ControlSysConfig,timeout_ms:int) -> tuple[Setpoint | None, Readback | None]:
     setpoint: Setpoint | None = None
     readback: Readback | None = None
 
@@ -25,6 +25,7 @@ def get_SP_RB(cfg: ControlSysConfig) -> tuple[Setpoint | None, Readback | None]:
             datatype=float,
             read_pv=cfg.read_pvname,
             name="",
+            timeout = timeout_ms / 1000.,
         )
         readback = Readback(r_sig)
 
@@ -33,6 +34,7 @@ def get_SP_RB(cfg: ControlSysConfig) -> tuple[Setpoint | None, Readback | None]:
             datatype=float,
             write_pv=cfg.write_pvname,
             name="",
+            timeout = timeout_ms / 1000.,
         )
         if isinstance(cfg, EpicsConfigRW):
             setpoint = Setpoint(w_sig, r_signal=readback._r_sig if readback else None)

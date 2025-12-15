@@ -20,13 +20,16 @@ class FloatSignalContainer(DeviceAccess):
     def __init__(self, cfg: ControlSysConfig):
         self._cfg = cfg
         self._unit = cfg.unit
+
+    def connect(self,timeout_ms:int):
+
         self._readable: bool = isinstance(
-            cfg, (EpicsConfigR, TangoConfigR)
+            self._cfg, (EpicsConfigR, TangoConfigR)
         )
         self._writable: bool = isinstance(
-            cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW)
+            self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW)
         )
-        self.SP, self.RB = global_pool._create_setpoint_readback(self.get_cs(), cfg)
+        self.SP, self.RB = global_pool._create_setpoint_readback(self.get_cs(), self._cfg,timeout_ms)
 
     def get_cs(self) -> str:
         raise Exception("get_cs() not implemented")
@@ -78,7 +81,10 @@ class FloatSignalContainer(DeviceAccess):
             The last written value.
 
         """
-        return self.SP.get()
+        if self._writable:
+            return self.SP.get()
+        else:
+            return self.RB.get()
 
     def readback(self) -> float:
         """
