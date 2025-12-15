@@ -102,7 +102,7 @@ class OphydAsyncControlSystem(ControlSystem):
                     raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(d._cfg)}")
 
                 if key not in self.__devices:
-                    nr.connect(self._cfg.timeout_ms)
+                    nr.build(self._cfg.timeout_ms)
                     self.__devices[key] = nr
                 newDevs.append(self.__devices[key])
             else:

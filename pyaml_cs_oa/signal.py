@@ -1,8 +1,6 @@
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel
 
-from .pool import global_pool
-
 from .types import (
     ControlSysConfig,
     EpicsConfigR,
@@ -12,16 +10,15 @@ from .types import (
     TangoConfigRW,
 )
 
-class FloatSignalContainer(DeviceAccess):
+class OASignal(DeviceAccess):
     """
-    Class that implements a PyAML Float Signal using ophyd_async Signals.
+    Class that implements a PyAML Signal using ophyd_async Signals.
     """
 
     def __init__(self, cfg: ControlSysConfig):
         self._cfg = cfg
-        self._unit = cfg.unit
 
-    def connect(self,timeout_ms:int):
+    def build(self,timeout_ms:int):
 
         self._readable: bool = isinstance(
             self._cfg, (EpicsConfigR, TangoConfigR)
@@ -29,7 +26,20 @@ class FloatSignalContainer(DeviceAccess):
         self._writable: bool = isinstance(
             self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW)
         )
-        self.SP, self.RB = global_pool._create_setpoint_readback(self.get_cs(), self._cfg,timeout_ms)
+
+        cs_name = self.get_cs()
+        if cs_name == "tango":
+            from .tango import get_SP_RB
+        elif cs_name == "epics":
+            from .epics import get_SP_RB
+        else:
+            raise ValueError(f"Unsupported cs_name: {cs_name}")
+
+        self.SP, self.RB = get_SP_RB(self._cfg,timeout_ms)
+        if self.SP:
+            self.SP.__peer__ = self
+        if self.RB:
+            self.RB.__peer__ = self
 
     def get_cs(self) -> str:
         raise Exception("get_cs() not implemented")
@@ -71,53 +81,3 @@ class FloatSignalContainer(DeviceAccess):
         """
         return self._cfg.unit
 
-    def get(self) -> float:
-        """
-        Get the last written value of the attribute.
-
-        Returns
-        -------
-        float
-            The last written value.
-
-        """
-        if self._writable:
-            return self.SP.get()
-        else:
-            return self.RB.get()
-
-    def readback(self) -> float:
-        """
-        Return the readback value with metadata.
-
-        Returns
-        -------
-        Value
-            The readback value including quality and timestamp.
-
-        """
-        return self.RB.get()
-
-    def set(self, value: float):
-        """
-        Write a value asynchronously to the Tango attribute.
-
-        Parameters
-        ----------
-        value : float
-            Value to write to the attribute.
-
-        """
-        return self.SP.set(value)
-
-    def set_and_wait(self, value: float):
-        """
-        Write a value synchronously to the Tango attribute.
-
-        Parameters
-        ----------
-        value : float
-            Value to write to the attribute.
-
-        """
-        self.SP.set_and_wait(value)
