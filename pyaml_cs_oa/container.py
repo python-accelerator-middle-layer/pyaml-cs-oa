@@ -161,6 +161,10 @@ class OASetpoint():
         """Synchronous wrapper around `async_set()`."""
         return arun(self._complete_set(value))
 
+    def get(self) -> SignalDatatypeT:
+        """Synchronous wrapper around `async_get()`."""
+        return arun(self.async_get())
+
     def set_and_wait(self, value) -> None:
         """Synchronous wrapper around `async_set_and_wait()`."""
         return arun(self.async_set_and_wait(value))

@@ -9,8 +9,9 @@ class EpicsConfigW(BaseModel):
     write_pvname: str
 
 
-class EpicsConfigRW(EpicsConfigR, EpicsConfigW):
-    pass
+class EpicsConfigRW(BaseModel):
+    read_pvname: str
+    write_pvname: str
 
 
 class TangoConfigR(BaseModel):

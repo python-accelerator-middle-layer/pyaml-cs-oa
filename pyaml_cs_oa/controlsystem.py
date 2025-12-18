@@ -65,7 +65,7 @@ class OphydAsyncControlSystem(ControlSystem):
           logger.setLevel(log_level)
 
         logger.log(logging.WARNING, f"OA control system binding for PyAML initialized with name '{self._cfg.name}'"
-                                 f" and prefix={self._cfg.prefix}")
+                                 f" and prefix='{self._cfg.prefix}'")
 
     def __newref(self,obj:OASignal) -> OASignal:
         # Shallow copy the object
@@ -76,7 +76,7 @@ class OphydAsyncControlSystem(ControlSystem):
         return newObj
 
     def attach(self, devs: list[OASignal]) -> list[OASignal]:
-        # Concatenate the tango_host prefix
+        # Concatenate the prefix
         newDevs = []
         for d in devs:            
             if d is not None:
