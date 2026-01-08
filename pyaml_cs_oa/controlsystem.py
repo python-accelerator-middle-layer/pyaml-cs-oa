@@ -80,7 +80,7 @@ class OphydAsyncControlSystem(ControlSystem):
                     nr = EpicsR(EpicsConfigR(read_pvname=key,timeout_ms=d._cfg.timeout_ms))
                 elif isinstance(d._cfg,EpicsConfigW):
                     key = self._cfg.prefix + d._cfg.write_pvname
-                    nr = EpicsRW(EpicsConfigW(write_pvname=key,timeout_ms=d._cfg.timeout_ms))
+                    nr = EpicsW(EpicsConfigW(write_pvname=key,timeout_ms=d._cfg.timeout_ms))
                 elif isinstance(d._cfg,EpicsConfigRW):
                     key = self._cfg.prefix + d._cfg.read_pvname + d._cfg.write_pvname
                     nr = EpicsRW(EpicsConfigRW(read_pvname=self._cfg.prefix + d._cfg.read_pvname, write_pvname=self._cfg.prefix + d._cfg.write_pvname,timeout_ms=d._cfg.timeout_ms))
