@@ -81,4 +81,7 @@ class OASignal(DeviceAccess):
         return self._cfg.unit
 
     def __repr__(self):
-       return repr(self._cfg).replace("ConfigModel",self.__class__.__name__)
+       cfg_str = repr(self._cfg)
+       # Replace the pydantic config class by the class itself
+       idx = cfg_str.find("(")
+       return f"{self.__class__.__name__}{cfg_str[idx:]}"
