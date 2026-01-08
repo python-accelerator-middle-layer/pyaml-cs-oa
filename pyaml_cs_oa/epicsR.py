@@ -1,4 +1,4 @@
-from .core import FloatSignalContainer
+from .float_signal import FloatSignalContainer
 from .types import EpicsConfigR
 
 PYAMLCLASS : str = "EpicsR"

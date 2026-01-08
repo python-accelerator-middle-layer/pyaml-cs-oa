@@ -3,8 +3,9 @@ from numpy import typing as npt
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel
 from pyaml.control.deviceaccesslist import DeviceAccessList
+from pyaml.exception import PyAMLException
 
-from .core import FloatSignalContainer
+from .float_signal import FloatSignalContainer
 from . import arun
 
 import asyncio
@@ -23,11 +24,11 @@ class OAScalarAggregator(DeviceAccessList):
     def add_devices(self, devices: DeviceAccess | list[DeviceAccess]):
         if isinstance(devices, list):
             if any([not isinstance(device, FloatSignalContainer) for device in devices]):
-                raise pyaml.PyAMLException("All devices must be instances of FloatSignalContainer.")
+                raise PyAMLException("All devices must be instances of FloatSignalContainer.")
             super().extend(devices)
         else:
             if not isinstance(devices, FloatSignalContainer):
-                raise pyaml.PyAMLException("Device must be an instance of FloatSignalContainer.")
+                raise PyAMLException("Device must be an instance of FloatSignalContainer.")
             super().append(devices)
 
     def get_devices(self) -> DeviceAccess | list[DeviceAccess]:
@@ -40,7 +41,7 @@ class OAScalarAggregator(DeviceAccessList):
     def set(self, value: npt.NDArray[np.float64]):
         
         if len(value)!=len(self):
-            raise pyaml.PyAMLException(f"Size of value ({len(value)} do not match the number of managed devices ({len(self)})")
+            raise PyAMLException(f"Size of value ({len(value)} do not match the number of managed devices ({len(self)})")
         
         d: FloatSignalContainer
         requests = [] # list of status to await

@@ -10,7 +10,7 @@ from .types import (
 )
 
 
-def get_SP_RB(cfg: ControlSysConfig,timeout_ms:int) -> tuple[Setpoint | None, Readback | None]:
+def get_SP_RB(cfg: ControlSysConfig) -> tuple[Setpoint | None, Readback | None]:
     setpoint: Setpoint | None = None
     readback: Readback | None = None
 
@@ -21,7 +21,7 @@ def get_SP_RB(cfg: ControlSysConfig,timeout_ms:int) -> tuple[Setpoint | None, Re
             datatype=float,
             read_pv=cfg.read_pvname,
             name="",
-            timeout = timeout_ms / 1000.,
+            timeout = cfg.timeout_ms / 1000.,
         )
         readback = Readback(r_sig)
         setpoint = None
@@ -32,7 +32,7 @@ def get_SP_RB(cfg: ControlSysConfig,timeout_ms:int) -> tuple[Setpoint | None, Re
             read_pv=cfg.read_pvname,
             write_pv=cfg.write_pvname,
             name="",
-            timeout = timeout_ms / 1000.,
+            timeout = cfg.timeout_ms / 1000.,
         )
         readback = Readback(w_sig)
         setpoint = Setpoint(w_sig)

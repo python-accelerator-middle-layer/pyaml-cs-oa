@@ -1,5 +1,4 @@
 from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import BaseModel
 
 from .types import (
     ControlSysConfig,
@@ -18,7 +17,7 @@ class OASignal(DeviceAccess):
     def __init__(self, cfg: ControlSysConfig):
         self._cfg = cfg
 
-    def build(self,timeout_ms:int):
+    def build(self):
 
         self._readable: bool = isinstance(
             self._cfg, (EpicsConfigR, TangoConfigR)
@@ -35,7 +34,7 @@ class OASignal(DeviceAccess):
         else:
             raise ValueError(f"Unsupported cs_name: {cs_name}")
 
-        self.SP, self.RB = get_SP_RB(self._cfg,timeout_ms)
+        self.SP, self.RB = get_SP_RB(self._cfg)
         if self.SP:
             self.SP.__peer__ = self
         if self.RB:
@@ -81,3 +80,5 @@ class OASignal(DeviceAccess):
         """
         return self._cfg.unit
 
+    def __repr__(self):
+       return repr(self._cfg).replace("ConfigModel",self.__class__.__name__)

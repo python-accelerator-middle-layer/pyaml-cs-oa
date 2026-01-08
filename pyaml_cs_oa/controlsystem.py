@@ -18,6 +18,11 @@ from .types import (
     TangoConfigRW,
 )
 from .signal import OASignal
+from .epicsR import EpicsR
+from .epicsW import EpicsW
+from .epicsRW import EpicsRW
+from .tangoR import TangoR
+from .tangoRW import TangoRW
 
 class ConfigModel(BaseModel):
 
@@ -38,9 +43,7 @@ class ConfigModel(BaseModel):
         readings of sclar value are serialized. 
     vector_aggregator : str
         Aggregator module for vecrors. If none specified, writings and readings
-        of vector are serialized. 
-    timeout_ms : int
-        Device timeout in milli seconds.
+        of vector are serialized,
     """
 
     name: str
@@ -48,7 +51,6 @@ class ConfigModel(BaseModel):
     debug_level: str=None
     scalar_aggregator: str | None = "pyaml_cs_oa.scalar_aggregator"
     vector_aggregator: str | None = None
-    timeout_ms: int = 3000
 
 
 class OphydAsyncControlSystem(ControlSystem):
@@ -67,14 +69,6 @@ class OphydAsyncControlSystem(ControlSystem):
         logger.log(logging.WARNING, f"OA control system binding for PyAML initialized with name '{self._cfg.name}'"
                                  f" and prefix='{self._cfg.prefix}'")
 
-    def __newref(self,obj:OASignal) -> OASignal:
-        # Shallow copy the object
-        newObj = copy.copy(obj)
-        # Shallow copy the config object
-        # to allow a new names
-        newObj._cfg = copy.copy(obj._cfg)
-        return newObj
-
     def attach(self, devs: list[OASignal]) -> list[OASignal]:
         # Concatenate the prefix
         newDevs = []
@@ -82,27 +76,25 @@ class OphydAsyncControlSystem(ControlSystem):
             if d is not None:
                 
                 if isinstance(d._cfg,EpicsConfigR):
-                    nr = self.__newref(d)
                     key = self._cfg.prefix + d._cfg.read_pvname
-                    nr._cfg.read_pvname = key
+                    nr = EpicsR(EpicsConfigR(read_pvname=key,timeout_ms=d._cfg.timeout_ms))
                 elif isinstance(d._cfg,EpicsConfigW):
-                    nr = self.__newref(d)
                     key = self._cfg.prefix + d._cfg.write_pvname
-                    nr._cfg.write_pvname = key
+                    nr = EpicsRW(EpicsConfigW(write_pvname=key,timeout_ms=d._cfg.timeout_ms))
                 elif isinstance(d._cfg,EpicsConfigRW):
-                    nr = self.__newref(d)
                     key = self._cfg.prefix + d._cfg.read_pvname + d._cfg.write_pvname
-                    nr._cfg.read_pvname = self._cfg.prefix + d._cfg.read_pvname
-                    nr._cfg.write_pvname = self._cfg.prefix + d._cfg.write_pvname
-                elif isinstance(d._cfg,(TangoConfigR,TangoConfigRW)):
-                    nr = self.__newref(d)
+                    nr = EpicsRW(EpicsConfigRW(read_pvname=self._cfg.prefix + d._cfg.read_pvname, write_pvname=self._cfg.prefix + d._cfg.write_pvname,timeout_ms=d._cfg.timeout_ms))
+                elif isinstance(d._cfg,TangoConfigR):
                     key = self._cfg.prefix + d._cfg.attribute
-                    nr._cfg.attribute = key
+                    nr = TangoR(TangoConfigR(attribute=key,timeout_ms=d._cfg.timeout_ms))
+                elif isinstance(d._cfg,TangoConfigRW):
+                    key = self._cfg.prefix + d._cfg.attribute
+                    nr = TangoRW(TangoConfigRW(attribute=key,timeout_ms=d._cfg.timeout_ms))                                                                
                 else:
                     raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(d._cfg)}")
 
                 if key not in self.__devices:
-                    nr.build(self._cfg.timeout_ms)
+                    nr.build()
                     self.__devices[key] = nr
                 newDevs.append(self.__devices[key])
             else:
