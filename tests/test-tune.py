@@ -11,7 +11,7 @@ def tune_callback(step: int, action: int, m: Magnet, dtune: np.array):
         print(f"Tune response: #{step} {m.get_name()} {dtune}")
     return True
 
-sr = Accelerator.load("../../pyaml/tests/config/EBSTune-ophyd.yaml",use_fast_loader=False)
+sr = Accelerator.load("EBSTune-ophyd.yaml",use_fast_loader=False)
 
 #sr.design.get_lattice().disable_6d()
 #tune_adjust = sr.design.get_tune_tuning("TUNE")
