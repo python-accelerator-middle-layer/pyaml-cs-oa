@@ -59,7 +59,7 @@ class OphydAsyncControlSystem(ControlSystem):
     def __init__(self, cfg: ConfigModel):
         super().__init__()
         self._cfg = cfg
-        self.__devices = {} # Dict containing all attached DeviceAccess
+        self._devices = {} # Dict containing all attached DeviceAccess
 
         if self._cfg.debug_level:
           log_level = getattr(logging, self._cfg.debug_level, logging.WARNING)
@@ -74,29 +74,39 @@ class OphydAsyncControlSystem(ControlSystem):
         newDevs = []
         for d in devs:            
             if d is not None:
+
+                sig_cfg = d._cfg
+                sig_cfg_cls = sig_cfg.__class__
                 
                 if isinstance(d._cfg,EpicsConfigR):
                     key = self._cfg.prefix + d._cfg.read_pvname
-                    nr = EpicsR(EpicsConfigR(read_pvname=key,timeout_ms=d._cfg.timeout_ms))
+                    sig_cls = EpicsR
+                    config = dict(read_pvname=key,timeout_ms=d._cfg.timeout_ms)
                 elif isinstance(d._cfg,EpicsConfigW):
                     key = self._cfg.prefix + d._cfg.write_pvname
-                    nr = EpicsW(EpicsConfigW(write_pvname=key,timeout_ms=d._cfg.timeout_ms))
+                    sig_cls = EpicsW
+                    config = dict(write_pvname=key,timeout_ms=d._cfg.timeout_ms)
                 elif isinstance(d._cfg,EpicsConfigRW):
                     key = self._cfg.prefix + d._cfg.read_pvname + d._cfg.write_pvname
-                    nr = EpicsRW(EpicsConfigRW(read_pvname=self._cfg.prefix + d._cfg.read_pvname, write_pvname=self._cfg.prefix + d._cfg.write_pvname,timeout_ms=d._cfg.timeout_ms))
+                    sig_cls = EpicsRW
+                    config = dict(read_pvname=self._cfg.prefix + d._cfg.read_pvname, write_pvname=self._cfg.prefix + d._cfg.write_pvname,timeout_ms=d._cfg.timeout_ms)
                 elif isinstance(d._cfg,TangoConfigR):
                     key = self._cfg.prefix + d._cfg.attribute
-                    nr = TangoR(TangoConfigR(attribute=key,timeout_ms=d._cfg.timeout_ms))
+                    sig_cls = TangoR
+                    config = dict(attribute=key,timeout_ms=d._cfg.timeout_ms)
                 elif isinstance(d._cfg,TangoConfigRW):
                     key = self._cfg.prefix + d._cfg.attribute
-                    nr = TangoRW(TangoConfigRW(attribute=key,timeout_ms=d._cfg.timeout_ms))                                                                
+                    sig_cls = TangoRW
+                    config = dict(attribute=key,timeout_ms=d._cfg.timeout_ms)
                 else:
-                    raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(d._cfg)}")
+                    raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(sig_cfg)}")
 
-                if key not in self.__devices:
+                if key not in self._devices:
+                    nr = sig_cls(sig_cfg_cls(**config))
                     nr.build()
-                    self.__devices[key] = nr
-                newDevs.append(self.__devices[key])
+                    self._devices[key] = nr
+
+                newDevs.append(self._devices[key])
             else:
                 newDevs.append(None)
         return newDevs
