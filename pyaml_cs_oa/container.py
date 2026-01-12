@@ -2,6 +2,7 @@ import asyncio
 import inspect
 from collections.abc import Awaitable, Callable
 from typing import TypeVar
+from .signal import OASignal
 
 from ophyd_async.core import (
     SignalDatatypeT,
@@ -9,11 +10,10 @@ from ophyd_async.core import (
     SignalW,
     set_and_wait_for_other_value,
 )
-from pyaml.control.signal import arun
-from pyaml.control.signal.container import Readback, Setpoint
 
 T = TypeVar("T")
 
+from . import arun
 
 def _looks_disconnected(exc: BaseException) -> bool:
     # Keep it generic: ophyd-async wraps cancellations in TimeoutError;
@@ -24,7 +24,7 @@ def _looks_disconnected(exc: BaseException) -> bool:
 async def _recover_once(
     run: Callable[[], Awaitable[T]],
     reconnect: Callable[[], Awaitable[None]],
-    rebuild: Callable[[], Awaitable[None]] | Callable[[], None] | None = None,
+    peer: OASignal,
 ) -> T:
     try:
         return await run()
@@ -37,8 +37,8 @@ async def _recover_once(
             return await run()
         except BaseException:
             # If that fails and we have a way to rebuild, do so and try one more time
-            if rebuild is not None:
-                maybe_awaitable = rebuild()
+            if peer is not None:
+                maybe_awaitable = peer.build()
                 if inspect.isawaitable(maybe_awaitable):
                     await maybe_awaitable
                 await reconnect()
@@ -46,11 +46,11 @@ async def _recover_once(
             raise
 
 
-class OAReadback(Readback):
+class OAReadback():
     """A readback object."""
 
     def __init__(self, r_signal: SignalR[SignalDatatypeT]):
-        super().__init__(r_signal)
+        self._r_sig = r_signal
 
     async def _run_get(self) -> SignalDatatypeT:
         await self._r_sig.connect()
@@ -61,7 +61,7 @@ class OAReadback(Readback):
         return await _recover_once(
             self._run_get,
             self._r_sig.connect,
-            getattr(self._r_sig, "__rebuild__", None),
+            getattr(self._r_sig, "__peer__", None),
         )
 
     async def _run_read(self) -> SignalDatatypeT:
@@ -73,17 +73,22 @@ class OAReadback(Readback):
         return await _recover_once(
             self._run_read,
             self._r_sig.connect,
-            getattr(self._r_sig, "__rebuild__", None),
+            getattr(self._r_sig, "__peer__", None),
         )
 
+    def get(self) -> SignalDatatypeT:
+        """Synchronous wrapper around `async_get()`."""
+        return arun(self.async_get())
 
-class OASetpoint(Setpoint):
+class OASetpoint():
     def __init__(
         self,
         w_signal: SignalW[SignalDatatypeT],
         r_signal: SignalR[SignalDatatypeT] | None = None,
     ):
-        super().__init__(w_signal, r_signal=r_signal)
+        self._w_sig = w_signal
+        self._r_sig = r_signal # used only for `set_and_wait()`
+        self._has_r_sig = (r_signal is not None)
 
     async def _run_get(self) -> SignalDatatypeT:
         await self._w_sig.connect()
@@ -94,7 +99,7 @@ class OASetpoint(Setpoint):
         return await _recover_once(
             self._run_get,
             self._w_sig.connect,
-            getattr(self._w_sig, "__rebuild__", None),
+            getattr(self._w_sig, "__peer__", None),
         )
 
     async def _run_read(self) -> SignalDatatypeT:
@@ -106,7 +111,7 @@ class OASetpoint(Setpoint):
         return await _recover_once(
             self._run_read,
             self._w_sig.connect,
-            getattr(self._w_sig, "__rebuild__", None),
+            getattr(self._w_sig, "__peer__", None),
         )
 
     async def _run_set(self, value):
@@ -118,15 +123,15 @@ class OASetpoint(Setpoint):
         return await _recover_once(
             lambda: self._run_set(value),
             self._w_sig.connect,
-            getattr(self._w_sig, "__rebuild__", None),
+            getattr(self._w_sig, "__peer__", None),
         )
 
     async def _reconnect_both(self) -> None:
         await asyncio.gather(self._w_sig.connect(), self._r_sig.connect())
 
     async def _rebuild_both(self) -> None:
-        w_rebuild = getattr(self._w_sig, "__rebuild__", None)
-        r_rebuild = getattr(self._r_sig, "__rebuild__", None)
+        w_rebuild = getattr(self._w_sig, "__peer__", None)
+        r_rebuild = getattr(self._r_sig, "__peer__", None)
         if w_rebuild is not None:
             w_rebuild()
         if r_rebuild is not None:
@@ -146,3 +151,20 @@ class OASetpoint(Setpoint):
             self._reconnect_both,
             self._rebuild_both,
         )
+
+    async def _complete_set(self, value):
+            status = await self.async_set(value)
+            await status  # Wait for completion before returning
+            return status
+
+    def set(self, value):
+        """Synchronous wrapper around `async_set()`."""
+        return arun(self._complete_set(value))
+
+    def get(self) -> SignalDatatypeT:
+        """Synchronous wrapper around `async_get()`."""
+        return arun(self.async_get())
+
+    def set_and_wait(self, value) -> None:
+        """Synchronous wrapper around `async_set_and_wait()`."""
+        return arun(self.async_set_and_wait(value))
