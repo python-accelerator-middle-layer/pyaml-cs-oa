@@ -3,20 +3,20 @@ from .types import ControlSysConfig
 
 class FloatSignalContainer(OASignal):
     """
-    Class that implements a PyAML Float Signal using ophyd_async Signals.
+    Class that implements a PyAML Float/FloatArray Signal using ophyd_async Signals.
     """
 
-    def __init__(self, cfg: ControlSysConfig):
-        super().__init__(cfg)
+    def __init__(self, cfg: ControlSysConfig,is_array:bool):
+        super().__init__(cfg,is_array)
 
-    def get(self) -> float:
+    def get(self):
         """
-        Get the last written value of the attribute.
+        Get the last written value(s) of the attribute.
 
         Returns
         -------
-        float
-            The last written value.
+        float | list[float]
+            The last written value(s).
 
         """
         if self._writable:
@@ -24,37 +24,37 @@ class FloatSignalContainer(OASignal):
         else:
             return self.RB.get()
 
-    def readback(self) -> float:
+    def readback(self):
         """
-        Return the readback value with metadata.
+        Return the readback value(s) with metadata.
 
         Returns
         -------
-        Value
-            The readback value including quality and timestamp.
+        Value | list[Value]
+            The readback value(s) including quality and timestamp.
 
         """
         return self.RB.get()
 
-    def set(self, value: float):
+    def set(self, value):
         """
-        Write a value asynchronously to the Tango attribute.
+        Write a value asynchronously to the device.
 
         Parameters
         ----------
-        value : float
-            Value to write to the attribute.
+        value : float | list[float]
+            Value(s) to write to the attribute.
 
         """
         return self.SP.set(value)
 
-    def set_and_wait(self, value: float):
+    def set_and_wait(self, value):
         """
-        Write a value synchronously to the Tango attribute.
+        Write a value(s) synchronously to the device.
 
         Parameters
         ----------
-        value : float
+        value : float | list[float]
             Value to write to the attribute.
 
         """

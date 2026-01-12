@@ -68,8 +68,14 @@ class OphydAsyncControlSystem(ControlSystem):
 
         logger.log(logging.WARNING, f"OA control system binding for PyAML initialized with name '{self._cfg.name}'"
                                  f" and prefix='{self._cfg.prefix}'")
-
+        
     def attach(self, devs: list[OASignal]) -> list[OASignal]:
+        return self._attach(devs,False)
+
+    def attach_array(self, devs: list[OASignal]) -> list[OASignal]:
+        return self._attach(devs,True)
+
+    def _attach(self, devs: list[OASignal],is_array:bool) -> list[OASignal]:
         # Concatenate the prefix
         newDevs = []
         for d in devs:            
@@ -102,7 +108,7 @@ class OphydAsyncControlSystem(ControlSystem):
                     raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(sig_cfg)}")
 
                 if key not in self._devices:
-                    nr = sig_cls(sig_cfg_cls(**config))
+                    nr = sig_cls(sig_cfg_cls(**config),is_array)
                     nr.build()
                     self._devices[key] = nr
 

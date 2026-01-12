@@ -14,8 +14,9 @@ class OASignal(DeviceAccess):
     Class that implements a PyAML Signal using ophyd_async Signals.
     """
 
-    def __init__(self, cfg: ControlSysConfig):
+    def __init__(self, cfg: ControlSysConfig,is_array:bool):
         self._cfg = cfg
+        self.is_array = is_array
 
     def build(self):
 
@@ -34,7 +35,7 @@ class OASignal(DeviceAccess):
         else:
             raise ValueError(f"Unsupported cs_name: {cs_name}")
 
-        self.SP, self.RB = get_SP_RB(self._cfg)
+        self.SP, self.RB = get_SP_RB(self._cfg,self.is_array)
         if self.SP:
             self.SP.__peer__ = self
         if self.RB:
