@@ -1,3 +1,10 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "pyaml_cs_oa/__init__.py"
+
 [project]
 name = "pyaml-cs-oa"
 description = "PyAML control system plugin for ophyd-async"
