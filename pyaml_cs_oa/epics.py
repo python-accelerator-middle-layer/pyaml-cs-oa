@@ -1,4 +1,4 @@
-from ophyd_async.epics.signal import epics_signal_r, epics_signal_rw
+from ophyd_async.epics.signal import epics_signal_r, epics_signal_w, epics_signal_rw
 from ophyd_async.core import Array1D
 import numpy
 
@@ -27,6 +27,16 @@ def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Rea
         )
         readback = Readback(r_sig)
         setpoint = None
+
+    if isinstance(cfg, EpicsConfigW):
+        w_sig = epics_signal_w(
+            datatype=float if not is_array else Array1D[numpy.float64],
+            write_pv=cfg.write_pvname,
+            name="",
+            timeout = cfg.timeout_ms / 1000.,
+        )
+        readback = None
+        setpoint = Setpoint(w_sig)
 
     if isinstance(cfg, EpicsConfigRW):
         w_sig = epics_signal_rw(
