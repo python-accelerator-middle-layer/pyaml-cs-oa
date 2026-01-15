@@ -3,7 +3,7 @@ from numpy import typing as npt
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel
 from pyaml.control.deviceaccesslist import DeviceAccessList
-from pyaml.exception import PyAMLException
+from pyaml import PyAMLException
 
 from .float_signal import FloatSignalContainer
 from . import arun
