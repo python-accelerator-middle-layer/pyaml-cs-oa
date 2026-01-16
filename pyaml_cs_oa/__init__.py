@@ -3,6 +3,8 @@ import contextlib
 from typing import Awaitable, Any
 import atexit
 
+__version__ = "0.1.0"
+
 # One persistent event loop
 _loop = None
 _nest_asyncio_applied = False
