@@ -24,6 +24,8 @@ from .epicsRW import EpicsRW
 from .tangoR import TangoR
 from .tangoRW import TangoRW
 
+from . import __version__
+
 class ConfigModel(BaseModel):
 
     """
@@ -66,7 +68,7 @@ class OphydAsyncControlSystem(ControlSystem):
           logger.parent.setLevel(log_level)
           logger.setLevel(log_level)
 
-        logger.log(logging.WARNING, f"OA control system binding for PyAML initialized with name '{self._cfg.name}'"
+        logger.log(logging.WARNING, f"PyAML OA control system binding ({__version__}) initialized with name '{self._cfg.name}'"
                                  f" and prefix='{self._cfg.prefix}'")
         
     def attach(self, devs: list[OASignal]) -> list[OASignal]:
