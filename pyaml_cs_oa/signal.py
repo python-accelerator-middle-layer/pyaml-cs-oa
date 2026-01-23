@@ -82,7 +82,7 @@ class OASignal(DeviceAccess):
         return self._cfg.unit
 
     def get_range(self) -> list:
-        if self._writable:
+        if self._writable and self._cfg.range:
             return self._cfg.range
         else:
             return [None, None]
