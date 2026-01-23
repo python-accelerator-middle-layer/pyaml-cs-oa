@@ -81,6 +81,16 @@ class OASignal(DeviceAccess):
         """
         return self._cfg.unit
 
+    def get_range(self) -> list[float] | None:
+        if self._writable:
+            return self._cfg.range
+        else:
+            return None
+
+    def check_device_availability(self) -> bool:
+        #TODO
+        return True
+
     def __repr__(self):
        cfg_str = repr(self._cfg)
        # Replace the pydantic config class by the class itself
