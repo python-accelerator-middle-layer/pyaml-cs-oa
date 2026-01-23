@@ -8,22 +8,23 @@ class EpicsConfigR(BaseModel):
 class EpicsConfigW(BaseModel):
     write_pvname: str
     timeout_ms: int = 3000
-
+    range: list[float] | None = None
 
 class EpicsConfigRW(BaseModel):
     read_pvname: str
     write_pvname: str
     timeout_ms: int = 3000
+    range: list[float] | None = None
 
 
 class TangoConfigR(BaseModel):
     attribute: str
     timeout_ms: int = 3000
 
-
 class TangoConfigRW(BaseModel):
     attribute: str
     timeout_ms: int = 3000
+    range: list[float] | None = None
 
 
 ControlSysConfig = (

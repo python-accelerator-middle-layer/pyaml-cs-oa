@@ -72,6 +72,25 @@ class OAScalarAggregator(DeviceAccessList):
             requests.append( d.RB.async_get() )
         values = arun(asyncio.gather(*requests))
         return np.array(values)
+    
+    def get_range(self) -> list[float]:
+        attr_range: list[float] = []
+        for device in self:
+            attr_range.extend(device.get_range())
+        return attr_range
+
+    def check_device_availability(self) -> bool:
+        available = False
+        for device in self:
+            available = device.check_device_availability()
+            if not available:
+                break
+        return available
 
     def __repr__(self):
-       return repr(self._cfg).replace("ConfigModel",self.__class__.__name__)
+       ret_str = "OAScalarAggregator(\n"
+       for d in self:
+           ret_str += repr(d)
+           ret_str += "\n"
+       ret_str+=")"
+       return ret_str
