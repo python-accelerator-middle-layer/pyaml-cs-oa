@@ -29,7 +29,7 @@ classifiers = [
 
 # Base dependencies (common to all installs)
 dependencies = [
-    "pyaml",
+    "accelerator-middle-layer>=0.2.2",
     "pydantic>=2.0",
     "ophyd-async",
 ]
