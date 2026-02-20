@@ -49,6 +49,7 @@ class ConfigModel(BaseModel):
     """
 
     name: str
+    catalog: str
     prefix: str = ""
     debug_level: str=None
     scalar_aggregator: str | None = "pyaml_cs_oa.scalar_aggregator"
@@ -70,7 +71,11 @@ class OphydAsyncControlSystem(ControlSystem):
 
         logger.log(logging.WARNING, f"PyAML OA control system binding ({__version__}) initialized with name '{self._cfg.name}'"
                                  f" and prefix='{self._cfg.prefix}'")
-        
+
+    def get_catalog_name(self) -> str | None:
+        """Returns the name of the catalog dedicated to this control system"""
+        return self._cfg.catalog
+
     def attach(self, devs: list[OASignal]) -> list[OASignal]:
         return self._attach(devs,False)
 
