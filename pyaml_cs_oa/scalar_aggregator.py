@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import typing as npt
 from pyaml.control.deviceaccess import DeviceAccess
+from pyaml.control.deviceaccessproxy import DeviceAccessProxy
 from pydantic import BaseModel
 from pyaml.control.deviceaccesslist import DeviceAccessList
 from pyaml import PyAMLException
@@ -23,11 +24,11 @@ class OAScalarAggregator(DeviceAccessList):
 
     def add_devices(self, devices: DeviceAccess | list[DeviceAccess]):
         if isinstance(devices, list):
-            if any([not isinstance(device, FloatSignalContainer) for device in devices]):
+            if any([not isinstance(DeviceAccessList.unwrap(device), FloatSignalContainer) for device in devices]):
                 raise PyAMLException("All devices must be instances of FloatSignalContainer.")
             super().extend(devices)
         else:
-            if not isinstance(devices, FloatSignalContainer):
+            if not isinstance(DeviceAccessList.unwrap(devices), FloatSignalContainer):
                 raise PyAMLException("Device must be an instance of FloatSignalContainer.")
             super().append(devices)
 
