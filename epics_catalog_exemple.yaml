@@ -1,0 +1,29 @@
+catalogs:
+  - type: pyaml_cs_oa.epics_static_catalog
+    name: device-catalog
+    entries:
+      - type: pyaml_cs_oa.epics_static_catalog_entry
+        key: a_string_key
+        device:
+          type: pyaml_cs_oa.epicsRW
+          read_pvname: HS4P2D1R:rdbk
+          write_pvname: HS4P2D1R:set
+          unit: A
+      - type: pyaml_cs_oa.epics_static_catalog_entry
+        key: a_string_key_with_specific_indexes
+        device:
+          type: pyaml_cs_oa.epicsRW
+          read_pvname: HS4P2D1R:rdbk
+          read_index: 24
+          write_pvname: HS4P2D1R:set
+          write_index: 30
+          unit: A
+      - type: pyaml_cs_oa.epics_static_catalog_entry
+        key: a_string_key_with_common_indexes
+        device:
+          type: pyaml_cs_oa.epicsRW
+          read_pvname: HS4P2D1R:rdbk
+          write_pvname: HS4P2D1R:set
+          index: 30
+          unit: A
+

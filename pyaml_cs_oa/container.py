@@ -46,16 +46,31 @@ async def _recover_once(
             raise
 
 
-class OAReadback():
-    """A readback object."""
+class OAReadback:
+    """Readback wrapper with optional element extraction for array signals.
 
-    def __init__(self, r_signal: SignalR[SignalDatatypeT]):
-        self._r_sig = r_signal
+    Parameters
+    ----------
+    r_signal:
+        A raw ``SignalR`` **or** an existing ``OAReadback`` (its underlying
+        signal is reused — useful for adding an index after the fact).
+    index:
+        When set, ``get()`` returns ``float(array[index])`` instead of the
+        full array value.
+    """
+
+    def __init__(self, r_signal: 'SignalR | OAReadback', index: int | None = None):
+        if isinstance(r_signal, OAReadback):
+            self._r_sig = r_signal._r_sig
+        else:
+            self._r_sig = r_signal
+        self._index = index
 
     async def _run_get(self) -> SignalDatatypeT:
         await self._r_sig.connect()
         backend = self._r_sig._connector.backend
-        return await backend.get_value()
+        value = await backend.get_value()
+        return float(value[self._index]) if self._index is not None else value
 
     async def async_get(self) -> SignalDatatypeT:
         return await _recover_once(
@@ -80,20 +95,42 @@ class OAReadback():
         """Synchronous wrapper around `async_get()`."""
         return arun(self.async_get())
 
-class OASetpoint():
+
+class OASetpoint:
+    """Setpoint wrapper with optional read-modify-write for array signals.
+
+    Parameters
+    ----------
+    w_signal:
+        A raw ``SignalW`` **or** an existing ``OASetpoint`` (its underlying
+        signal is reused).
+    r_signal:
+        Optional readback signal, used only by ``set_and_wait()``.
+    index:
+        When set, ``get()`` returns ``float(array[index])`` and ``set(v)``
+        performs a read-modify-write on element ``index``.
+    """
+
     def __init__(
         self,
-        w_signal: SignalW[SignalDatatypeT],
-        r_signal: SignalR[SignalDatatypeT] | None = None,
+        w_signal: 'SignalW | OASetpoint',
+        r_signal: 'SignalR | None' = None,
+        index: int | None = None,
     ):
-        self._w_sig = w_signal
-        self._r_sig = r_signal # used only for `set_and_wait()`
-        self._has_r_sig = (r_signal is not None)
+        if isinstance(w_signal, OASetpoint):
+            self._w_sig = w_signal._w_sig
+            self._r_sig = w_signal._r_sig if r_signal is None else r_signal
+        else:
+            self._w_sig = w_signal
+            self._r_sig = r_signal
+        self._has_r_sig = (self._r_sig is not None)
+        self._index = index
 
     async def _run_get(self) -> SignalDatatypeT:
         await self._w_sig.connect()
         backend = self._w_sig._connector.backend
-        return await backend.get_setpoint()
+        value = await backend.get_setpoint()
+        return float(value[self._index]) if self._index is not None else value
 
     async def async_get(self) -> SignalDatatypeT:
         return await _recover_once(
@@ -114,14 +151,27 @@ class OASetpoint():
             getattr(self._w_sig, "__peer__", None),
         )
 
-    async def _run_set(self, value):
+    async def _run_set(self, value) -> None:
         await self._w_sig.connect()
-        status = self._w_sig.set(value)
-        return status
+        return self._w_sig.set(value)
+
+    async def _run_set_indexed(self, value) -> None:
+        import numpy as np
+        await self._w_sig.connect()
+        backend = self._w_sig._connector.backend
+        arr = np.array(await backend.get_setpoint(), dtype=float)
+        arr = arr.copy()
+        arr[self._index] = value
+        return self._w_sig.set(arr)
 
     async def async_set(self, value):
+        run = (
+            (lambda: self._run_set_indexed(value))
+            if self._index is not None
+            else (lambda: self._run_set(value))
+        )
         return await _recover_once(
-            lambda: self._run_set(value),
+            run,
             self._w_sig.connect,
             getattr(self._w_sig, "__peer__", None),
         )
@@ -153,9 +203,9 @@ class OASetpoint():
         )
 
     async def _complete_set(self, value):
-            status = await self.async_set(value)
-            await status  # Wait for completion before returning
-            return status
+        status = await self.async_set(value)
+        await status
+        return status
 
     def set(self, value):
         """Synchronous wrapper around `async_set()`."""

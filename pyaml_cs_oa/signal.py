@@ -9,20 +9,42 @@ from .types import (
     TangoConfigRW,
 )
 
+
+def _effective_indexes(cfg: ControlSysConfig) -> tuple[int | None, int | None]:
+    """Return ``(eff_read_idx, eff_write_idx)`` for *cfg*.
+
+    For ``EpicsConfigRW``, ``read_index``/``write_index`` override the common
+    ``index`` independently.  For single-side configs, the unused side is
+    always ``None``.
+    """
+    if isinstance(cfg, EpicsConfigRW):
+        common = cfg.index
+        return (
+            cfg.read_index if cfg.read_index is not None else common,
+            cfg.write_index if cfg.write_index is not None else common,
+        )
+    if isinstance(cfg, (EpicsConfigR, TangoConfigR)):
+        return cfg.index, None
+    if isinstance(cfg, EpicsConfigW):
+        return None, cfg.index
+    if isinstance(cfg, TangoConfigRW):
+        return cfg.index, cfg.index
+    return None, None
+
+
 class OASignal(DeviceAccess):
     """
     Class that implements a PyAML Signal using ophyd_async Signals.
     """
 
-    def __init__(self, cfg: ControlSysConfig,is_array:bool):
+    def __init__(self, cfg: ControlSysConfig, is_array: bool = False):
         self._cfg = cfg
-        self.is_array = is_array
+        eff_read, eff_write = _effective_indexes(cfg)
+        # is_array is forced True whenever any index is specified.
+        self.is_array = is_array or (eff_read is not None) or (eff_write is not None)
 
     def build(self):
-
-        self._readable: bool = isinstance(
-            self._cfg, (EpicsConfigR, TangoConfigR)
-        )
+        self._readable: bool = isinstance(self._cfg, (EpicsConfigR, TangoConfigR))
         self._writable: bool = isinstance(
             self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW)
         )
@@ -35,7 +57,16 @@ class OASignal(DeviceAccess):
         else:
             raise ValueError(f"Unsupported cs_name: {cs_name}")
 
-        self.SP, self.RB = get_SP_RB(self._cfg,self.is_array)
+        self.SP, self.RB = get_SP_RB(self._cfg, self.is_array)
+
+        eff_read, eff_write = _effective_indexes(self._cfg)
+        if eff_read is not None or eff_write is not None:
+            from .container import OAReadback, OASetpoint
+            if self.RB is not None and eff_read is not None:
+                self.RB = OAReadback(self.RB, index=eff_read)
+            if self.SP is not None and eff_write is not None:
+                self.SP = OASetpoint(self.SP, index=eff_write)
+
         if self.SP:
             self.SP.__peer__ = self
         if self.RB:
@@ -45,40 +76,23 @@ class OASignal(DeviceAccess):
         raise Exception("get_cs() not implemented")
 
     def name(self) -> str:
-        """
-        Return the name of the signal.
-        """
         return self._signal.name
 
     def measure_name(self) -> str:
-        """
-        Return the short attribute name (last component).
-
-        Returns
-        -------
-        str
-            The attribute name (e.g., 'current').
-        """
-
-        # TODO override measure name in sub classes
         if isinstance(self._cfg, (EpicsConfigR, EpicsConfigRW)):
-            return self._cfg.read_pvname
+            base = self._cfg.read_pvname
+        elif isinstance(self._cfg, EpicsConfigW):
+            base = self._cfg.write_pvname
         elif isinstance(self._cfg, (TangoConfigR, TangoConfigRW)):
-            return self._cfg.attribute
+            base = self._cfg.attribute
         else:
             raise ValueError(
                 f"Unsupported control system config type: {type(self._cfg)!r}"
             )
+        eff_read, _ = _effective_indexes(self._cfg)
+        return f"{base}[{eff_read}]" if eff_read is not None else base
 
     def unit(self) -> str:
-        """
-        Return the unit of the attribute.
-
-        Returns
-        -------
-        str
-            The unit string.
-        """
         return self._cfg.unit
 
     def get_range(self) -> list:
@@ -93,6 +107,5 @@ class OASignal(DeviceAccess):
 
     def __repr__(self):
        cfg_str = repr(self._cfg)
-       # Replace the pydantic config class by the class itself
        idx = cfg_str.find("(")
        return f"{self.__class__.__name__}{cfg_str[idx:]}"
