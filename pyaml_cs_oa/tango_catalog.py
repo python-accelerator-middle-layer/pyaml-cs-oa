@@ -1,4 +1,4 @@
-okfrom pydantic import ConfigDict
+from pydantic import ConfigDict
 
 import pyaml
 from pyaml.common.exception import PyAMLException
