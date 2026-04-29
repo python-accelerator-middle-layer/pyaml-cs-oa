@@ -10,25 +10,27 @@ class FloatSignalContainer(OASignal):
     def __init__(self, cfg: ControlSysConfig,is_array:bool):
         super().__init__(cfg,is_array)
 
-    def _indexed_float(self,signal_name: str, value, index: int) -> float:
+    def _indexed_float(self, value) -> float:
 
         if self._cfg.index is None:
+
             try:
-                return float(indexed_value)    
+                return float(value)    
             except (TypeError, ValueError) as exc:
                 raise PyAMLException(
-                    f"{signal_name}: backend.get_value()[{index}] cannot be converted "
-                    f"to float; got {type(indexed_value).__name__}."
+                    f"{self.name()}: backend.get_value()[{index}] cannot be converted "
+                    f"to float; got {type(value).__name__}."
                 ) from exc
+            
+        else:
         
-
-        try:
-            indexed_value = value[index]
-        except (IndexError, KeyError, TypeError) as exc:
-            raise PyAMLException(
-                f"{signal_name}: cannot read index {index} from "
-                f"backend.get_value() result of type {type(value).__name__}."
-            ) from exc
+            try:
+                return value[self._cfg.index]
+            except (IndexError, KeyError, TypeError) as exc:
+                raise PyAMLException(
+                    f"{self.name()}: cannot read index {index} from "
+                    f"backend.get_value() result of type {type(value).__name__}."
+                ) from exc
 
     def get(self):
         """
