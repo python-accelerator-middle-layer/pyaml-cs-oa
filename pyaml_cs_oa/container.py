@@ -78,8 +78,7 @@ class OAReadback:
     Parameters
     ----------
     r_signal:
-        A raw ``SignalR`` **or** an existing ``OAReadback`` (its underlying
-        signal is reused — useful for adding an index after the fact).
+        Source Ophyd signal
     index:
         When set, ``get()`` returns ``float(array[index])`` instead of the
         full array value.
