@@ -60,18 +60,18 @@ def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Rea
 
     if isinstance(cfg, EpicsConfigR):
         r_sig = create_signal_r(cfg.read_pvname,cfg.timeout_ms / 1000.0)
-        readback = Readback(r_sig,cfg.index)
+        readback = Readback(r_sig)
         setpoint = None
 
     if isinstance(cfg, EpicsConfigW):
         w_sig = create_signal_w(cfg.write_pvname,cfg.timeout_ms / 1000.0)
         readback = None
-        setpoint = Setpoint(w_sig,cfg.index)
+        setpoint = Setpoint(w_sig)
 
     if isinstance(cfg, EpicsConfigRW):
         rw_sig = create_signal_rw(cfg.read_pvname,cfg.write_pvname,cfg.timeout_ms / 1000.0)
-        readback = Readback(rw_sig,cfg.index)
-        setpoint = Setpoint(rw_sig,cfg.index)
+        readback = Readback(rw_sig)
+        setpoint = Setpoint(rw_sig)
 
 
     return setpoint, readback
