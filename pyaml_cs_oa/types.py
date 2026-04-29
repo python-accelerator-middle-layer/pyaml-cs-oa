@@ -20,10 +20,7 @@ class EpicsConfigRW(BaseModel):
     write_pvname: str
     timeout_ms: int = 3000
     range: list[float] | None = None
-    index: int | None = None        # shorthand: applies to both sides when set
-    read_index: int | None = None   # overrides index for the read side
-    write_index: int | None = None  # overrides index for the write side
-
+    index: int | None = None
 
 class TangoConfigR(BaseModel):
     attribute: str
