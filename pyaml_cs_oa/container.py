@@ -2,7 +2,6 @@ import asyncio
 import inspect
 from collections.abc import Awaitable, Callable
 from typing import TypeVar
-from .signal import OASignal
 
 from ophyd_async.core import (
     SignalDatatypeT,
@@ -10,10 +9,37 @@ from ophyd_async.core import (
     SignalW,
     set_and_wait_for_other_value,
 )
+from pyaml.common.exception import PyAMLException
+
+from . import arun
+from .signal import OASignal
 
 T = TypeVar("T")
 
-from . import arun
+
+def _indexed_float(signal_name: str, value: SignalDatatypeT, index: int) -> float:
+    if not hasattr(value, "__getitem__"):
+        raise PyAMLException(
+            f"{signal_name}: backend.get_value() returned a non-indexable "
+            f"value of type {type(value).__name__}; cannot read index {index}."
+        )
+
+    try:
+        indexed_value = value[index]
+    except (IndexError, KeyError, TypeError) as exc:
+        raise PyAMLException(
+            f"{signal_name}: cannot read index {index} from "
+            f"backend.get_value() result of type {type(value).__name__}."
+        ) from exc
+
+    try:
+        return float(indexed_value)
+    except (TypeError, ValueError) as exc:
+        raise PyAMLException(
+            f"{signal_name}: backend.get_value()[{index}] cannot be converted "
+            f"to float; got {type(indexed_value).__name__}."
+        ) from exc
+
 
 def _looks_disconnected(exc: BaseException) -> bool:
     # Keep it generic: ophyd-async wraps cancellations in TimeoutError;
@@ -68,7 +94,11 @@ class OAReadback:
         backend = self._r_sig._connector.backend
         value = await backend.get_value()
         print(f"Read {self._r_sig.name} index={self._index}")
-        return float(value[self._index]) if self._index is not None else value
+        return (
+            _indexed_float(self._r_sig.name, value, self._index)
+            if self._index is not None
+            else value
+        )
 
     async def async_get(self) -> SignalDatatypeT:
         return await _recover_once(
