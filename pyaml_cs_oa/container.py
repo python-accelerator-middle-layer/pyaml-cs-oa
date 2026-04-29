@@ -59,17 +59,15 @@ class OAReadback:
         full array value.
     """
 
-    def __init__(self, r_signal: 'SignalR | OAReadback', index: int | None = None):
-        if isinstance(r_signal, OAReadback):
-            self._r_sig = r_signal._r_sig
-        else:
-            self._r_sig = r_signal
+    def __init__(self, r_signal: SignalR[SignalDatatypeT], index: int | None = None):
+        self._r_sig = r_signal
         self._index = index
 
     async def _run_get(self) -> SignalDatatypeT:
         await self._r_sig.connect()
         backend = self._r_sig._connector.backend
         value = await backend.get_value()
+        print(f"Read {self._r_sig.name} index={self._index}")
         return float(value[self._index]) if self._index is not None else value
 
     async def async_get(self) -> SignalDatatypeT:
