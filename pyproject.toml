@@ -36,6 +36,11 @@ dependencies = [
 
 [project.optional-dependencies]
 
+# Test-only dependencies
+test = [
+    "pytest",
+]
+
 # Optional EPICS support
 epics = ["ophyd-async[ca,pva]"]
 
@@ -77,6 +82,13 @@ line-ending = "lf"
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+markers = [
+    "integration: tests that require external accelerator or control-system infrastructure",
+    "requires_control_system: tests that require live EPICS or Tango services",
+]
 
 [tool.mypy]
 python_version = "3.11"
