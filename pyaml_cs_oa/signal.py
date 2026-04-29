@@ -9,29 +9,6 @@ from .types import (
     TangoConfigRW,
 )
 
-
-def _effective_indexes(cfg: ControlSysConfig) -> tuple[int | None, int | None]:
-    """Return ``(eff_read_idx, eff_write_idx)`` for *cfg*.
-
-    For ``EpicsConfigRW``, ``read_index``/``write_index`` override the common
-    ``index`` independently.  For single-side configs, the unused side is
-    always ``None``.
-    """
-    if isinstance(cfg, EpicsConfigRW):
-        common = cfg.index
-        return (
-            cfg.read_index if cfg.read_index is not None else common,
-            cfg.write_index if cfg.write_index is not None else common,
-        )
-    if isinstance(cfg, (EpicsConfigR, TangoConfigR)):
-        return cfg.index, None
-    if isinstance(cfg, EpicsConfigW):
-        return None, cfg.index
-    if isinstance(cfg, TangoConfigRW):
-        return cfg.index, cfg.index
-    return None, None
-
-
 class OASignal(DeviceAccess):
     """
     Class that implements a PyAML Signal using ophyd_async Signals.
@@ -39,9 +16,8 @@ class OASignal(DeviceAccess):
 
     def __init__(self, cfg: ControlSysConfig, is_array: bool = False):
         self._cfg = cfg
-        eff_read, eff_write = _effective_indexes(cfg)
         # is_array is forced True whenever any index is specified.
-        self.is_array = is_array or (eff_read is not None) or (eff_write is not None)
+        self.is_array = is_array or cfg.index is not None
 
     def build(self):
         self._readable: bool = isinstance(self._cfg, (EpicsConfigR, TangoConfigR))
@@ -58,14 +34,6 @@ class OASignal(DeviceAccess):
             raise ValueError(f"Unsupported cs_name: {cs_name}")
 
         self.SP, self.RB = get_SP_RB(self._cfg, self.is_array)
-
-        eff_read, eff_write = _effective_indexes(self._cfg)
-        if eff_read is not None or eff_write is not None:
-            from .container import OAReadback, OASetpoint
-            if self.RB is not None and eff_read is not None:
-                self.RB = OAReadback(self.RB, index=eff_read)
-            if self.SP is not None and eff_write is not None:
-                self.SP = OASetpoint(self.SP, index=eff_write)
 
         if self.SP:
             self.SP.__peer__ = self
