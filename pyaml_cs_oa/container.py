@@ -18,12 +18,6 @@ T = TypeVar("T")
 
 
 def _indexed_float(signal_name: str, value: SignalDatatypeT, index: int) -> float:
-    if not hasattr(value, "__getitem__"):
-        raise PyAMLException(
-            f"{signal_name}: backend.get_value() returned a non-indexable "
-            f"value of type {type(value).__name__}; cannot read index {index}."
-        )
-
     try:
         indexed_value = value[index]
     except (IndexError, KeyError, TypeError) as exc:
