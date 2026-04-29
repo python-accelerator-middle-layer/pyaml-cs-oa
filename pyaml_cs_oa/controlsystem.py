@@ -90,30 +90,31 @@ class OphydAsyncControlSystem(ControlSystem):
             if d is not None:
                 sig_cfg = d._cfg
                 sig_cfg_cls = sig_cfg.__class__
+                index_str = "" if sig_cfg.index is None else str(sig_cfg.index)
 
                 if isinstance(d._cfg, EpicsConfigR):
-                    key = self._cfg.prefix + d._cfg.read_pvname
+                    key = self._cfg.prefix + d._cfg.read_pvname + index_str
                     sig_cls = EpicsR
-                    config = dict(read_pvname=key)
+                    config = dict(read_pvname=self._cfg.prefix + d._cfg.read_pvname)
                 elif isinstance(d._cfg, EpicsConfigW):
-                    key = self._cfg.prefix + d._cfg.write_pvname
+                    key = self._cfg.prefix + d._cfg.write_pvname + index_str
                     sig_cls = EpicsW
-                    config = dict(write_pvname=key)
+                    config = dict(write_pvname=self._cfg.prefix + d._cfg.write_pvname)
                 elif isinstance(d._cfg, EpicsConfigRW):
-                    key = self._cfg.prefix + d._cfg.read_pvname + d._cfg.write_pvname
+                    key = self._cfg.prefix + d._cfg.read_pvname + d._cfg.write_pvname + index_str
                     sig_cls = EpicsRW
                     config = dict(
                         read_pvname=self._cfg.prefix + d._cfg.read_pvname,
                         write_pvname=self._cfg.prefix + d._cfg.write_pvname,
                     )
                 elif isinstance(d._cfg, TangoConfigR):
-                    key = self._cfg.prefix + d._cfg.attribute
+                    key = self._cfg.prefix + d._cfg.attribute + index_str
                     sig_cls = TangoR
-                    config = dict(attribute=key)
+                    config = dict(attribute=self._cfg.prefix + d._cfg.attribute)
                 elif isinstance(d._cfg, TangoConfigRW):
-                    key = self._cfg.prefix + d._cfg.attribute
+                    key = self._cfg.prefix + d._cfg.attribute + index_str
                     sig_cls = TangoRW
-                    config = dict(attribute=key)
+                    config = dict(attribute=self._cfg.prefix + d._cfg.attribute)
                 else:
                     raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(sig_cfg)}")
 
