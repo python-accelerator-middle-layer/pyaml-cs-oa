@@ -22,32 +22,32 @@ def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Rea
         r_sig = epics_signal_r(
             datatype=float if not is_array else Array1D[numpy.float64],
             read_pv=cfg.read_pvname,
-            name="",
+            name=cfg.read_pvname, # Use name for debugging
             timeout = cfg.timeout_ms / 1000.,
         )
-        readback = Readback(r_sig)
+        readback = Readback(r_sig,cfg.index)
         setpoint = None
 
     if isinstance(cfg, EpicsConfigW):
         w_sig = epics_signal_w(
             datatype=float if not is_array else Array1D[numpy.float64],
             write_pv=cfg.write_pvname,
-            name="",
+            name=cfg.write_pvname, # Use name for debugging
             timeout = cfg.timeout_ms / 1000.,
         )
         readback = None
-        setpoint = Setpoint(w_sig)
+        setpoint = Setpoint(w_sig,cfg.index)
 
     if isinstance(cfg, EpicsConfigRW):
         w_sig = epics_signal_rw(
             datatype=float if not is_array else Array1D[numpy.float64],
             read_pv=cfg.read_pvname,
             write_pv=cfg.write_pvname,
-            name="",
+            name=cfg.read_pvname, # Use name for debugging
             timeout = cfg.timeout_ms / 1000.,
         )
-        readback = Readback(w_sig)
-        setpoint = Setpoint(w_sig)
+        readback = Readback(w_sig,cfg.index)
+        setpoint = Setpoint(w_sig,cfg.index)
 
 
     return setpoint, readback
