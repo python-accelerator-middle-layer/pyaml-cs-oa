@@ -123,10 +123,9 @@ class OASetpoint:
     Parameters
     ----------
     w_signal:
-        A raw ``SignalW`` **or** an existing ``OASetpoint`` (its underlying
-        signal is reused).
+        Ophyd source write signal
     r_signal:
-        Optional readback signal, used only by ``set_and_wait()``.
+        Optional Ophyd source signal readback signal, used only by ``set_and_wait()``.
     index:
         When set, ``get()`` returns ``float(array[index])`` and ``set(v)``
         performs a read-modify-write on element ``index``.
@@ -134,16 +133,12 @@ class OASetpoint:
 
     def __init__(
         self,
-        w_signal: 'SignalW | OASetpoint',
-        r_signal: 'SignalR | None' = None,
+        w_signal: SignalW[SignalDatatypeT],
+        r_signal: SignalR[SignalDatatypeT] | None = None,
         index: int | None = None,
     ):
-        if isinstance(w_signal, OASetpoint):
-            self._w_sig = w_signal._w_sig
-            self._r_sig = w_signal._r_sig if r_signal is None else r_signal
-        else:
-            self._w_sig = w_signal
-            self._r_sig = r_signal
+        self._w_sig = w_signal
+        self._r_sig = r_signal
         self._has_r_sig = (self._r_sig is not None)
         self._index = index
 
