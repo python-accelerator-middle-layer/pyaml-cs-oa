@@ -1,13 +1,14 @@
 from .signal import OASignal
 from .types import ControlSysConfig
 
+
 class FloatSignalContainer(OASignal):
     """
     Class that implements a PyAML Float/FloatArray Signal using ophyd_async Signals.
     """
 
-    def __init__(self, cfg: ControlSysConfig,is_array:bool):
-        super().__init__(cfg,is_array)
+    def __init__(self, cfg: ControlSysConfig, is_array: bool):
+        super().__init__(cfg, is_array)
 
     def get(self):
         """

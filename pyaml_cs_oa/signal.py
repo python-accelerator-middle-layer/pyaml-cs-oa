@@ -9,23 +9,20 @@ from .types import (
     TangoConfigRW,
 )
 
+
 class OASignal(DeviceAccess):
     """
     Class that implements a PyAML Signal using ophyd_async Signals.
     """
 
-    def __init__(self, cfg: ControlSysConfig,is_array:bool):
+    def __init__(self, cfg: ControlSysConfig, is_array: bool):
         self._cfg = cfg
         self.is_array = is_array
 
     def build(self):
 
-        self._readable: bool = isinstance(
-            self._cfg, (EpicsConfigR, TangoConfigR)
-        )
-        self._writable: bool = isinstance(
-            self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW)
-        )
+        self._readable: bool = isinstance(self._cfg, (EpicsConfigR, TangoConfigR))
+        self._writable: bool = isinstance(self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW))
 
         cs_name = self.get_cs()
         if cs_name == "tango":
@@ -35,7 +32,7 @@ class OASignal(DeviceAccess):
         else:
             raise ValueError(f"Unsupported cs_name: {cs_name}")
 
-        self.SP, self.RB = get_SP_RB(self._cfg,self.is_array)
+        self.SP, self.RB = get_SP_RB(self._cfg, self.is_array)
         if self.SP:
             self.SP.__peer__ = self
         if self.RB:
@@ -66,9 +63,7 @@ class OASignal(DeviceAccess):
         elif isinstance(self._cfg, (TangoConfigR, TangoConfigRW)):
             return self._cfg.attribute
         else:
-            raise ValueError(
-                f"Unsupported control system config type: {type(self._cfg)!r}"
-            )
+            raise ValueError(f"Unsupported control system config type: {type(self._cfg)!r}")
 
     def unit(self) -> str:
         """
@@ -88,11 +83,11 @@ class OASignal(DeviceAccess):
             return [None, None]
 
     def check_device_availability(self) -> bool:
-        #TODO
+        # TODO
         return True
 
     def __repr__(self):
-       cfg_str = repr(self._cfg)
-       # Replace the pydantic config class by the class itself
-       idx = cfg_str.find("(")
-       return f"{self.__class__.__name__}{cfg_str[idx:]}"
+        cfg_str = repr(self._cfg)
+        # Replace the pydantic config class by the class itself
+        idx = cfg_str.find("(")
+        return f"{self.__class__.__name__}{cfg_str[idx:]}"

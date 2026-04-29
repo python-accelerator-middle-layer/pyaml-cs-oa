@@ -4,8 +4,7 @@ import time
 
 from pyaml.accelerator import Accelerator
 
-from tests.live_tune_helpers import TESTS_DIR, assert_tune_pair, integration_marks
-from tests.live_tune_helpers import wait_seconds
+from tests.live_tune_helpers import TESTS_DIR, assert_tune_pair, integration_marks, wait_seconds
 
 pytestmark = integration_marks
 

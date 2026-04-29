@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from pyaml import PyAMLException
 from pyaml.control.deviceaccess import DeviceAccess
+
 from pyaml_cs_oa.float_signal import FloatSignalContainer
 from pyaml_cs_oa.scalar_aggregator import OAScalarAggregator
 from pyaml_cs_oa.types import EpicsConfigR

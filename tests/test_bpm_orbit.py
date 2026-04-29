@@ -3,13 +3,14 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-
 from pyaml.arrays.bpm_array import BPMArray
-from pyaml.bpm.bpm import BPM, ConfigModel as BPMConfig
+from pyaml.bpm.bpm import BPM
+from pyaml.bpm.bpm import ConfigModel as BPMConfig
 from pyaml.bpm.bpm_simple_model import BPMSimpleModel
 from pyaml.bpm.bpm_simple_model import ConfigModel as BPMSimpleModelConfig
 from pyaml.control.abstract_impl import RBpmArray
 from pyaml.control.deviceaccess import DeviceAccess
+
 from pyaml_cs_oa.controlsystem import ConfigModel, OphydAsyncControlSystem
 
 

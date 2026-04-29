@@ -4,7 +4,6 @@ import pytest
 
 from pyaml_cs_oa import arun
 from pyaml_cs_oa.container import OAReadback, OASetpoint
-
 from tests.fakes import FakeBackend, FakeSignal, PeerRebuilder
 
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-
 from pyaml.common.exception import PyAMLException
+
 from pyaml_cs_oa.controlsystem import ConfigModel, OphydAsyncControlSystem
 from pyaml_cs_oa.epicsR import ConfigModel as EpicsRConfig
 from pyaml_cs_oa.epicsR import EpicsR
