@@ -49,20 +49,19 @@ class EpicsCatalog(Catalog):
 def _parse_pv(token: str) -> tuple[list[str], int | None]:
     token = token.strip()
 
-    # Extract index (if any)
+    # No suffix means scalar access to the full PV value.
     index = None
     if "@" in token:
         token, idx_str = token.rsplit("@", 1)
-    try:
-        index = int(idx_str.strip())
-    except ValueError:
-        raise PyAMLException(f"EpicsCatalog: invalid index in PV token '{token}'") from None
+        try:
+            index = int(idx_str.strip())
+        except ValueError:
+            raise PyAMLException(f"EpicsCatalog: invalid index in PV token '{token}'") from None
 
-    # Extract pv name(s)
+    # Parenthesized keys describe one read PV and one write PV.
     if token.startswith("(") and token.endswith(")"):
-        # We have a list
         names = token[1:-1]
-        name_list = [names.strip() for n in names.split(",")]
+        name_list = [name.strip() for name in names.split(",")]
     else:
         name_list = [token.strip()]
 
