@@ -1,6 +1,6 @@
-from ophyd_async.epics.signal import epics_signal_r, epics_signal_w, epics_signal_rw
-from ophyd_async.core import Array1D
 import numpy
+from ophyd_async.core import Array1D
+from ophyd_async.epics.signal import epics_signal_r, epics_signal_rw, epics_signal_w
 
 from .container import OAReadback as Readback
 from .container import OASetpoint as Setpoint
@@ -12,7 +12,7 @@ from .types import (
 )
 
 
-def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Readback | None]:
+def get_SP_RB(cfg: ControlSysConfig, is_array: bool) -> tuple[Setpoint | None, Readback | None]:
     setpoint: Setpoint | None = None
     readback: Readback | None = None
 
@@ -23,7 +23,7 @@ def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Rea
             datatype=float if not is_array else Array1D[numpy.float64],
             read_pv=cfg.read_pvname,
             name="",
-            timeout = cfg.timeout_ms / 1000.,
+            timeout=cfg.timeout_ms / 1000.0,
         )
         readback = Readback(r_sig)
         setpoint = None
@@ -33,7 +33,7 @@ def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Rea
             datatype=float if not is_array else Array1D[numpy.float64],
             write_pv=cfg.write_pvname,
             name="",
-            timeout = cfg.timeout_ms / 1000.,
+            timeout=cfg.timeout_ms / 1000.0,
         )
         readback = None
         setpoint = Setpoint(w_sig)
@@ -44,10 +44,9 @@ def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Rea
             read_pv=cfg.read_pvname,
             write_pv=cfg.write_pvname,
             name="",
-            timeout = cfg.timeout_ms / 1000.,
+            timeout=cfg.timeout_ms / 1000.0,
         )
         readback = Readback(w_sig)
         setpoint = Setpoint(w_sig)
-
 
     return setpoint, readback
