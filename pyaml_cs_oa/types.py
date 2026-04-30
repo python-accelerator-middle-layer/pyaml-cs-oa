@@ -6,6 +6,7 @@ class EpicsConfigR(BaseModel):
     read_pvname: str
     timeout_ms: int = 3000
     index: int | None = None
+    unit: str = ""
 
 
 class EpicsConfigW(BaseModel):
@@ -14,6 +15,7 @@ class EpicsConfigW(BaseModel):
     timeout_ms: int = 3000
     range: list[float] | None = None
     index: int | None = None
+    unit: str = ""
 
 
 class EpicsConfigRW(BaseModel):
@@ -23,11 +25,14 @@ class EpicsConfigRW(BaseModel):
     timeout_ms: int = 3000
     range: list[float] | None = None
     index: int | None = None
+    unit: str = ""
+
 
 class TangoConfigR(BaseModel):
     attribute: str
     timeout_ms: int = 3000
     index: int | None = None
+    unit: str = ""
 
 
 class TangoConfigRW(BaseModel):
@@ -35,6 +40,7 @@ class TangoConfigRW(BaseModel):
     timeout_ms: int = 3000
     range: list[float] | None = None
     index: int | None = None
+    unit: str = ""
 
 
 ControlSysConfig = EpicsConfigR | EpicsConfigW | EpicsConfigRW | TangoConfigR | TangoConfigRW

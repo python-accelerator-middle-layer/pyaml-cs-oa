@@ -22,9 +22,7 @@ class OASignal(DeviceAccess):
 
     def build(self):
         self._readable: bool = isinstance(self._cfg, (EpicsConfigR, TangoConfigR))
-        self._writable: bool = isinstance(
-            self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW)
-        )
+        self._writable: bool = isinstance(self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW))
 
         cs_name = self.get_cs()
         if cs_name == "tango":
@@ -49,32 +47,28 @@ class OASignal(DeviceAccess):
 
     def measure_name(self) -> str:
         if isinstance(self._cfg, (EpicsConfigR, EpicsConfigRW)):
-            base = self._cfg.read_pvname
+            return self._cfg.read_pvname
         elif isinstance(self._cfg, EpicsConfigW):
-            base = self._cfg.write_pvname
+            return self._cfg.write_pvname
         elif isinstance(self._cfg, (TangoConfigR, TangoConfigRW)):
-            base = self._cfg.attribute
+            return self._cfg.attribute
         else:
-            raise ValueError(
-                f"Unsupported control system config type: {type(self._cfg)!r}"
-            )
-        eff_read, _ = _effective_indexes(self._cfg)
-        return f"{base}[{eff_read}]" if eff_read is not None else base
+            raise ValueError(f"Unsupported control system config type: {type(self._cfg)!r}")
 
     def unit(self) -> str:
         return self._cfg.unit
 
     def get_range(self) -> list:
-        if self._writable and self._cfg.range:
-            return self._cfg.range
-        else:
-            return [None, None]
+        if isinstance(self._cfg, (EpicsConfigW, EpicsConfigRW, TangoConfigRW)):
+            if self._cfg.range:
+                return self._cfg.range
+        return [None, None]
 
     def check_device_availability(self) -> bool:
         # TODO
         return True
 
     def __repr__(self):
-       cfg_str = repr(self._cfg)
-       idx = cfg_str.find("(")
-       return f"{self.__class__.__name__}{cfg_str[idx:]}"
+        cfg_str = repr(self._cfg)
+        idx = cfg_str.find("(")
+        return f"{self.__class__.__name__}{cfg_str[idx:]}"

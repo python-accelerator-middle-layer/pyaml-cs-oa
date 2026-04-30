@@ -4,12 +4,12 @@ from .types import EpicsConfigW
 PYAMLCLASS: str = "EpicsW"
 
 
-class ConfigModel(EpicsConfigW):
-    unit: str = ""
+class ConfigModel(EpicsConfigW): ...
 
 
 class EpicsW(FloatSignalContainer):
     def __init__(self, cfg: ConfigModel, is_array: bool = False):
         super().__init__(cfg, is_array)
+
     def get_cs(self) -> str:
         return "epics"

@@ -1,6 +1,7 @@
+from pyaml.common.exception import PyAMLException
+
 from .signal import OASignal
 from .types import ControlSysConfig
-from pyaml.common.exception import PyAMLException
 
 
 class FloatSignalContainer(OASignal):
@@ -12,24 +13,18 @@ class FloatSignalContainer(OASignal):
         super().__init__(cfg, is_array)
 
     def _indexed_float(self, value) -> float:
-
         if self._cfg.index is None:
-
             try:
-                return float(value)    
+                return float(value)
             except (TypeError, ValueError) as exc:
-                raise PyAMLException(
-                    f"{self.name()}: backend.get_value()[{index}] cannot be converted "
-                    f"to float; got {type(value).__name__}."
-                ) from exc
-            
+                raise PyAMLException(f"{self.name()}: cannot be converted to float; got {type(value).__name__}.") from exc
+
         else:
-        
             try:
                 return value[self._cfg.index]
             except (IndexError, KeyError, TypeError) as exc:
                 raise PyAMLException(
-                    f"{self.name()}: cannot read index {index} from "
+                    f"{self.name()}: cannot read index {self._cfg.index} from "
                     f"backend.get_value() result of type {type(value).__name__}."
                 ) from exc
 

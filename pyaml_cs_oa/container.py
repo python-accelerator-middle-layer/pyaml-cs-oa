@@ -25,7 +25,7 @@ def _looks_disconnected(exc: BaseException) -> bool:
 async def _recover_once(
     run: Callable[[], Awaitable[T]],
     reconnect: Callable[[], Awaitable[None]],
-    peer: OASignal,
+    peer,
 ) -> T:
     try:
         return await run()
@@ -130,7 +130,8 @@ class OASetpoint:
         )
 
     async def _reconnect_both(self) -> None:
-        await asyncio.gather(self._w_sig.connect(), self._r_sig.connect())
+        if self._r_sig:
+            await asyncio.gather(self._w_sig.connect(), self._r_sig.connect())
 
     async def _rebuild_both(self) -> None:
         w_rebuild = getattr(self._w_sig, "__peer__", None)
