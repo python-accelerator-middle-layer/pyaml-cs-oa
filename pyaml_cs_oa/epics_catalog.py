@@ -53,6 +53,7 @@ def _parse_pv(token: str) -> tuple[list[str], int | None]:
     index = None
     if "@" in token:
         token, idx_str = token.rsplit("@", 1)
+        token = token.strip()
         try:
             index = int(idx_str.strip())
         except ValueError:

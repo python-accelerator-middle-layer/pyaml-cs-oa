@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pytest
 from pyaml.common.exception import PyAMLException
 
