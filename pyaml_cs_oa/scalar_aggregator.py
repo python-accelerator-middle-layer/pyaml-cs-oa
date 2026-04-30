@@ -1,24 +1,24 @@
-import numpy as np
-from numpy import typing as npt
-from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import BaseModel
-from pyaml.control.deviceaccesslist import DeviceAccessList
-from pyaml import PyAMLException
-
-from .float_signal import FloatSignalContainer
-from . import arun
-
 import asyncio
 
-PYAMLCLASS : str = "OAScalarAggregator"
+import numpy as np
+from numpy import typing as npt
+from pyaml import PyAMLException
+from pyaml.control.deviceaccess import DeviceAccess
+from pyaml.control.deviceaccesslist import DeviceAccessList
+from pydantic import BaseModel
+
+from . import arun
+from .float_signal import FloatSignalContainer
+
+PYAMLCLASS: str = "OAScalarAggregator"
 
 
 class ConfigModel(BaseModel):
     pass
 
-class OAScalarAggregator(DeviceAccessList):
 
-    def __init__(self, cfg:ConfigModel=None):
+class OAScalarAggregator(DeviceAccessList):
+    def __init__(self, cfg: ConfigModel = None):
         super().__init__()
         self._r_signal_list = {} # List of signal to read
         self._w_signal_list = {} # List of signal to read/write
@@ -59,24 +59,24 @@ class OAScalarAggregator(DeviceAccessList):
             self._add_to_dev_list(devices)
 
     def get_devices(self) -> DeviceAccess | list[DeviceAccess]:
-        if len(self)==1:
+        if len(self) == 1:
             return self[0]
         else:
             return self
 
     def set(self, value: npt.NDArray[np.float64]):
-        
-        if len(value)!=len(self):
+
+        if len(value) != len(self):
             raise PyAMLException(f"Size of value ({len(value)} do not match the number of managed devices ({len(self)})")
-        
+
         d: FloatSignalContainer
-        requests = [] # list of status to await
-        for idx,d in enumerate(self):
-            requests.append( d.SP._complete_set(value[idx]) )
+        requests = []  # list of status to await
+        for idx, d in enumerate(self):
+            requests.append(d.SP._complete_set(value[idx]))
         arun(asyncio.gather(*requests))
 
     def set_and_wait(self, value: npt.NDArray[np.float64]):
-        raise NotImplemented("Not implemented yet.")
+        raise NotImplementedError("Not implemented yet.")
 
     def _read(self,signal_list:dict) -> npt.NDArray[np.float64]:
 
@@ -123,9 +123,9 @@ class OAScalarAggregator(DeviceAccessList):
         return available
 
     def __repr__(self):
-       ret_str = "OAScalarAggregator(\n"
-       for d in self:
-           ret_str += repr(d)
-           ret_str += "\n"
-       ret_str+=")"
-       return ret_str
+        ret_str = "OAScalarAggregator(\n"
+        for d in self:
+            ret_str += repr(d)
+            ret_str += "\n"
+        ret_str += ")"
+        return ret_str

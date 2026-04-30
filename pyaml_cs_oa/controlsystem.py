@@ -9,21 +9,24 @@ PYAMLCLASS: str = "OphydAsyncControlSystem"
 
 logger = logging.getLogger(__name__)
 
+from . import __version__
+from .epicsR import EpicsR
+from .epicsRW import EpicsRW
+from .epicsW import EpicsW
+from .signal import OASignal
+from .tangoR import TangoR
+from .tangoRW import TangoRW
 from .types import (
     EpicsConfigR,
-    EpicsConfigW,
     EpicsConfigRW,
+    EpicsConfigW,
     TangoConfigR,
     TangoConfigRW,
 )
-from .signal import OASignal
-from .epicsR import EpicsR
-from .epicsW import EpicsW
-from .epicsRW import EpicsRW
-from .tangoR import TangoR
-from .tangoRW import TangoRW
 
-from . import __version__
+PYAMLCLASS: str = "OphydAsyncControlSystem"
+
+logger = logging.getLogger(__name__)
 
 class ConfigModel(BaseModel):
     """
@@ -42,7 +45,7 @@ class ConfigModel(BaseModel):
         Debug verbosity level.
     scalar_aggregator : str
         Aggregator module for scalar values. If none specified, writings and
-        readings of scalar values are serialized.
+        readings of sclar value are serialized.
     vector_aggregator : str
         Aggregator module for vecrors. If none specified, writings and readings
         of vector are serialized,
@@ -154,7 +157,7 @@ class OphydAsyncControlSystem(ControlSystem):
     def vector_aggregator(self) -> str | None:
         """
         Returns the module name used for handling aggregator of DeviceVectorAccess
-        
+
         Returns
         -------
         str

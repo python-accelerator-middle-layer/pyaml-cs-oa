@@ -1,5 +1,6 @@
-from ophyd_async.epics.signal import epics_signal_r, epics_signal_w, epics_signal_rw
-from ophyd_async.core import SignalR, SignalW, SignalRW
+import numpy
+from ophyd_async.core import Array1D
+from ophyd_async.epics.signal import epics_signal_r, epics_signal_rw, epics_signal_w
 
 from .container import OAReadback as Readback
 from .container import OASetpoint as Setpoint
@@ -52,7 +53,7 @@ def create_signal_rw(read_pv:str,write_pv:str,timeout:float) -> SignalR:
             ALL_RW[key] = rw_sig
         return ALL_RW[key]
 
-def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Readback | None]:
+def get_SP_RB(cfg: ControlSysConfig, is_array: bool) -> tuple[Setpoint | None, Readback | None]:
     setpoint: Setpoint | None = None
     readback: Readback | None = None
 
@@ -72,6 +73,5 @@ def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Rea
         rw_sig = create_signal_rw(cfg.read_pvname,cfg.write_pvname,cfg.timeout_ms / 1000.0)
         readback = Readback(rw_sig)
         setpoint = Setpoint(rw_sig)
-
 
     return setpoint, readback

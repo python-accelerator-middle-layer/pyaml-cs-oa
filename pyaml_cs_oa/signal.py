@@ -9,6 +9,7 @@ from .types import (
     TangoConfigRW,
 )
 
+
 class OASignal(DeviceAccess):
     """
     Class that implements a PyAML Signal using ophyd_async Signals.
@@ -70,7 +71,7 @@ class OASignal(DeviceAccess):
             return [None, None]
 
     def check_device_availability(self) -> bool:
-        #TODO
+        # TODO
         return True
 
     def __repr__(self):

@@ -2,7 +2,6 @@ import asyncio
 import inspect
 from collections.abc import Awaitable, Callable
 from typing import TypeVar
-from .signal import OASignal
 
 from ophyd_async.core import (
     SignalDatatypeT,
@@ -11,9 +10,11 @@ from ophyd_async.core import (
     set_and_wait_for_other_value,
 )
 
+from . import arun
+from .signal import OASignal
+
 T = TypeVar("T")
 
-from . import arun
 
 def _looks_disconnected(exc: BaseException) -> bool:
     # Keep it generic: ophyd-async wraps cancellations in TimeoutError;
@@ -46,7 +47,7 @@ async def _recover_once(
             raise
 
 
-class OAReadback():
+class OAReadback:
     """A readback object."""
 
     def __init__(self, r_signal: SignalR[SignalDatatypeT]):
@@ -81,15 +82,16 @@ class OAReadback():
         """Synchronous wrapper around `async_get()`."""
         return arun(self.async_get())
 
-class OASetpoint():
+
+class OASetpoint:
     def __init__(
         self,
         w_signal: SignalW[SignalDatatypeT],
         r_signal: SignalR[SignalDatatypeT] | None = None,
     ):
         self._w_sig = w_signal
-        self._r_sig = r_signal # used only for `set_and_wait()`
-        self._has_r_sig = (r_signal is not None)
+        self._r_sig = r_signal  # used only for `set_and_wait()`
+        self._has_r_sig = r_signal is not None
 
     async def _run_get(self) -> SignalDatatypeT:
         await self._w_sig.connect()
@@ -140,9 +142,7 @@ class OASetpoint():
 
     async def _run_set_and_wait(self, value) -> None:
         if not self._has_r_sig:
-            raise RuntimeError(
-                "Cannot use set_and_wait() without a matching readback signal."
-            )
+            raise RuntimeError("Cannot use set_and_wait() without a matching readback signal.")
         await self._reconnect_both()
         await set_and_wait_for_other_value(self._w_sig, value, self._r_sig, value)
 
@@ -154,9 +154,9 @@ class OASetpoint():
         )
 
     async def _complete_set(self, value):
-            status = await self.async_set(value)
-            await status  # Wait for completion before returning
-            return status
+        status = await self.async_set(value)
+        await status  # Wait for completion before returning
+        return status
 
     def set(self, value):
         """Synchronous wrapper around `async_set()`."""

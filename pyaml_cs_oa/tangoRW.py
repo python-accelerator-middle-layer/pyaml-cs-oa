@@ -1,10 +1,12 @@
 from .float_signal import FloatSignalContainer
 from .types import TangoConfigRW
 
-PYAMLCLASS : str = "TangoRW"
+PYAMLCLASS: str = "TangoRW"
+
 
 class ConfigModel(TangoConfigRW):
     unit: str = ""
+
 
 class TangoRW(FloatSignalContainer):
     def __init__(self, cfg: ConfigModel, is_array: bool = False):
