@@ -70,11 +70,10 @@ def test_measure_name_uses_tango_attribute() -> None:
     assert signal.measure_name() == "sys/tg_test/1/value"
 
 
-def test_measure_name_for_write_only_epics_config_is_currently_unsupported() -> None:
+def test_measure_name_uses_epics_write_pv_for_write_only_signal() -> None:
     signal = EpicsW(EpicsWConfig(write_pvname="PV:SP"))
 
-    with pytest.raises(ValueError, match="Unsupported control system config type"):
-        signal.measure_name()
+    assert signal.measure_name() == "PV:SP"
 
 
 def test_get_range_returns_configured_range_for_writable_signal() -> None:
@@ -84,14 +83,14 @@ def test_get_range_returns_configured_range_for_writable_signal() -> None:
     assert signal.get_range() == [0.0, 10.0]
 
 
-def test_get_range_returns_empty_range_when_not_writable() -> None:
+def test_get_range_returns_configured_range_from_write_config() -> None:
     signal = EpicsW(EpicsWConfig(write_pvname="PV:SP", range=[0.0, 10.0]))
     signal._writable = False
 
-    assert signal.get_range() == [None, None]
+    assert signal.get_range() == [0.0, 10.0]
 
 
-def test_base_epics_write_config_has_no_unit_field() -> None:
+def test_base_epics_write_config_has_default_unit_field() -> None:
     cfg = EpicsConfigW(write_pvname="PV:SP")
 
-    assert not hasattr(cfg, "unit")
+    assert cfg.unit == ""

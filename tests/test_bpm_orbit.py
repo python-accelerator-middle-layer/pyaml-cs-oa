@@ -8,10 +8,13 @@ from pyaml.bpm.bpm import BPM
 from pyaml.bpm.bpm import ConfigModel as BPMConfig
 from pyaml.bpm.bpm_simple_model import BPMSimpleModel
 from pyaml.bpm.bpm_simple_model import ConfigModel as BPMSimpleModelConfig
+from pyaml.configuration.catalog import Catalog, CatalogConfigModel
 from pyaml.control.abstract_impl import RBpmArray
 from pyaml.control.deviceaccess import DeviceAccess
 
 from pyaml_cs_oa.controlsystem import ConfigModel, OphydAsyncControlSystem
+from pyaml_cs_oa.float_signal import FloatSignalContainer
+from pyaml_cs_oa.types import EpicsConfigR
 
 
 class VectorDevice(DeviceAccess):
@@ -51,6 +54,41 @@ class VectorDevice(DeviceAccess):
         return True
 
 
+class _VectorReadSide:
+    def __init__(self, source: VectorDevice) -> None:
+        self._r_sig = source
+        self._source = source
+
+    async def async_get(self) -> np.ndarray:
+        return self._source.get()
+
+    def get(self) -> np.ndarray:
+        return self._source.get()
+
+
+class IndexedVectorSignal(FloatSignalContainer):
+    """FloatSignalContainer fake resolving one indexed value from a shared vector."""
+
+    def __init__(self, source: VectorDevice, index: int) -> None:
+        super().__init__(EpicsConfigR(read_pvname=source.name(), index=index, unit=source.unit()), is_array=True)
+        self._readable = True
+        self._writable = False
+        self.RB = _VectorReadSide(source)
+        self.SP = None
+
+    def name(self) -> str:
+        return f"{self._cfg.read_pvname}[{self._cfg.index}]"
+
+
+class StaticCatalog(Catalog):
+    def __init__(self, devices: dict[str, DeviceAccess]) -> None:
+        super().__init__(CatalogConfigModel(name="test-catalog"))
+        self._devices = devices
+
+    def resolve(self, key: str) -> DeviceAccess:
+        return self._devices[key]
+
+
 class IdentityAttachControlSystem(OphydAsyncControlSystem):
     """Control system fake that keeps pre-built DeviceAccess objects attached."""
 
@@ -63,35 +101,50 @@ class IdentityAttachControlSystem(OphydAsyncControlSystem):
 
 def _attached_indexed_bpm(
     control_system: IdentityAttachControlSystem,
-    orbit_device: VectorDevice,
     bpm_index: int,
 ) -> BPM:
     model = BPMSimpleModel(
         BPMSimpleModelConfig(
-            x_pos=orbit_device,
-            y_pos=orbit_device,
-            x_pos_index=2 * bpm_index,
-            y_pos_index=(2 * bpm_index) + 1,
+            x_pos=f"BPM{bpm_index}:X",
+            y_pos=f"BPM{bpm_index}:Y",
         ),
     )
+    x_pos, y_pos = control_system.get_devices(model.get_pos_devices())
     bpm = BPM(BPMConfig(name=f"BPM{bpm_index}", model=model))
 
     return bpm.attach(
         control_system,
-        RBpmArray(model, orbit_device, orbit_device),
+        RBpmArray(x_pos, y_pos),
         offset=None,
         tilt=None,
     )
 
 
+def _control_system_with_indexed_orbit(orbit_device: VectorDevice, bpm_count: int) -> IdentityAttachControlSystem:
+    control_system = IdentityAttachControlSystem(ConfigModel(name="live"))
+    control_system.set_catalog(
+        StaticCatalog(
+            {
+                f"BPM{bpm_index}:X": IndexedVectorSignal(orbit_device, 2 * bpm_index)
+                for bpm_index in range(bpm_count)
+            }
+            | {
+                f"BPM{bpm_index}:Y": IndexedVectorSignal(orbit_device, (2 * bpm_index) + 1)
+                for bpm_index in range(bpm_count)
+            },
+        ),
+    )
+    return control_system
+
+
 def test_indexed_bpm_orbit_aggregator_keeps_distinct_positions() -> None:
     """Regression test for BPM orbit reads backed by one indexed vector PV."""
 
-    control_system = IdentityAttachControlSystem(ConfigModel(name="live"))
     orbit_device = VectorDevice("BPM:ORBIT", [3285.83564, 0.0, 2195.12518, 0.0])
+    control_system = _control_system_with_indexed_orbit(orbit_device, bpm_count=2)
     bpms = [
-        _attached_indexed_bpm(control_system, orbit_device, bpm_index=0),
-        _attached_indexed_bpm(control_system, orbit_device, bpm_index=1),
+        _attached_indexed_bpm(control_system, bpm_index=0),
+        _attached_indexed_bpm(control_system, bpm_index=1),
     ]
 
     positions = BPMArray("BPM", bpms, use_aggregator=True).positions
@@ -110,15 +163,15 @@ def test_indexed_bpm_orbit_aggregator_keeps_distinct_positions() -> None:
 def test_indexed_bpm_orbit_aggregator_reads_all_bpms_at_once() -> None:
     """A shared vector orbit read should feed every BPM in the array."""
 
-    control_system = IdentityAttachControlSystem(ConfigModel(name="live"))
     orbit_device = VectorDevice(
         "BPM:ORBIT",
         [3285.83564, 0.0, 2195.12518, 0.0, 11202.0909, 0.0],
     )
+    control_system = _control_system_with_indexed_orbit(orbit_device, bpm_count=3)
     bpms = [
-        _attached_indexed_bpm(control_system, orbit_device, bpm_index=0),
-        _attached_indexed_bpm(control_system, orbit_device, bpm_index=1),
-        _attached_indexed_bpm(control_system, orbit_device, bpm_index=2),
+        _attached_indexed_bpm(control_system, bpm_index=0),
+        _attached_indexed_bpm(control_system, bpm_index=1),
+        _attached_indexed_bpm(control_system, bpm_index=2),
     ]
 
     positions = BPMArray("BPM", bpms, use_aggregator=True).positions.get()
@@ -139,15 +192,15 @@ def test_indexed_bpm_orbit_aggregator_reads_all_bpms_at_once() -> None:
 def test_indexed_bpm_orbit_axis_aggregators_keep_distinct_positions() -> None:
     """The horizontal and vertical accessors must keep the same index mapping."""
 
-    control_system = IdentityAttachControlSystem(ConfigModel(name="live"))
     orbit_device = VectorDevice(
         "BPM:ORBIT",
         [3285.83564, 0.0, 2195.12518, 0.0, 11202.0909, 0.0],
     )
+    control_system = _control_system_with_indexed_orbit(orbit_device, bpm_count=3)
     bpms = [
-        _attached_indexed_bpm(control_system, orbit_device, bpm_index=0),
-        _attached_indexed_bpm(control_system, orbit_device, bpm_index=1),
-        _attached_indexed_bpm(control_system, orbit_device, bpm_index=2),
+        _attached_indexed_bpm(control_system, bpm_index=0),
+        _attached_indexed_bpm(control_system, bpm_index=1),
+        _attached_indexed_bpm(control_system, bpm_index=2),
     ]
 
     bpm_array = BPMArray("BPM", bpms, use_aggregator=True)

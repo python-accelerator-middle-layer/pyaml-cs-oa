@@ -15,7 +15,7 @@ def test_bessy_tune_correction_live(monkeypatch) -> None:
     accelerator = Accelerator.load("bessy2tune-KL.yaml")
     tune = accelerator.live.tune
 
-    tune.response.load_json("tunemat-bessy.json")
+    assert tune.response_matrix is not None
 
     assert_tune_pair(tune.readback())
     tune.set([0.83, 0.84], iter=2, wait_time=3)

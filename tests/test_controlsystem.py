@@ -99,8 +99,11 @@ def test_attach_preserves_none_entries() -> None:
 
 
 def test_attach_rejects_unsupported_config_type() -> None:
+    class UnsupportedConfig:
+        index = None
+
     class UnsupportedDevice:
-        _cfg = object()
+        _cfg = UnsupportedConfig()
 
     control_system = OphydAsyncControlSystem(ConfigModel(name="live"))
 
