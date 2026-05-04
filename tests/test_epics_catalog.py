@@ -99,7 +99,9 @@ def test_static_epics_catalog_entry_exposes_key_and_device() -> None:
     assert entry.get_device() is device
 
 
-def test_static_epics_catalog_resolves_read_write_and_write_entries(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_static_epics_catalog_resolves_read_write_and_write_entries_without_building(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(EpicsR, "build", _record_build)
     monkeypatch.setattr(EpicsRW, "build", _record_build)
     monkeypatch.setattr(EpicsW, "build", _record_build)
@@ -121,9 +123,9 @@ def test_static_epics_catalog_resolves_read_write_and_write_entries(monkeypatch:
     assert catalog.resolve("read") is read
     assert catalog.resolve("read_write") is read_write
     assert catalog.resolve("write") is write
-    assert read.build_calls == 1
-    assert read_write.build_calls == 1
-    assert write.build_calls == 1
+    assert not hasattr(read, "build_calls")
+    assert not hasattr(read_write, "build_calls")
+    assert not hasattr(write, "build_calls")
 
 
 def test_static_epics_catalog_rejects_empty_entries() -> None:

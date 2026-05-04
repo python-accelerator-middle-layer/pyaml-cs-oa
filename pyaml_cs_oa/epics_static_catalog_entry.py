@@ -1,6 +1,5 @@
-from pydantic import BaseModel, ConfigDict
-
 from pyaml.control.deviceaccess import DeviceAccess
+from pydantic import BaseModel, ConfigDict
 
 PYAMLCLASS = "EpicsStaticCatalogEntry"
 

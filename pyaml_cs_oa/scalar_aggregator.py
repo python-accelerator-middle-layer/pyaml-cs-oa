@@ -35,14 +35,14 @@ class OAScalarAggregator(DeviceAccessList):
         else:
             if self._writable != d._writable:
                 raise PyAMLException("Cannot mix read only and read/write signal in a same aggreagator")
-        
+
         # Construct structure to avoid duplicate reading
         # The shared part is the source Ophyd signal
         if d.RB._r_sig not in self._r_signal_list:
             self._r_signal_list[d.RB._r_sig] = {"source":d.RB,"indices":[[d._cfg.index,len(self)]]}
         else:
             self._r_signal_list[d.RB._r_sig]["indices"].append([d._cfg.index,len(self)])
-        
+
         if self._writable:
             if d.SP._w_sig not in self._w_signal_list:
                 self._w_signal_list[d.SP._w_sig] = {"source":d.SP,"indices":[[d._cfg.index,len(self)]]}
@@ -80,9 +80,8 @@ class OAScalarAggregator(DeviceAccessList):
 
     def _read(self,signal_list:dict) -> npt.NDArray[np.float64]:
 
-        d: FloatSignalContainer
         requests = [] # list of status to await
-        for d,dc in signal_list.items():
+        for _d,dc in signal_list.items():
             requests.append( dc["source"].async_get() )
         values = arun(asyncio.gather(*requests))
         rvalues = np.zeros(len(self))
@@ -107,7 +106,7 @@ class OAScalarAggregator(DeviceAccessList):
     def readback(self) -> np.array:
 
         return self._read(self._r_signal_list)
-    
+
     def get_range(self) -> list[float]:
         attr_range: list[float] = []
         for device in self:

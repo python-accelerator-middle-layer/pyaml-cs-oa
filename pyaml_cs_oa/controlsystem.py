@@ -1,13 +1,10 @@
 import logging
 
-from pydantic import BaseModel, ConfigDict
 from pyaml.common.exception import PyAMLException
 from pyaml.configuration.catalog import Catalog
 from pyaml.control.controlsystem import ControlSystem
-
-PYAMLCLASS: str = "OphydAsyncControlSystem"
-
-logger = logging.getLogger(__name__)
+from pyaml.control.deviceaccess import DeviceAccess
+from pydantic import BaseModel, ConfigDict
 
 from . import __version__
 from .epicsR import EpicsR
@@ -27,6 +24,7 @@ from .types import (
 PYAMLCLASS: str = "OphydAsyncControlSystem"
 
 logger = logging.getLogger(__name__)
+
 
 class ConfigModel(BaseModel):
     """
@@ -86,6 +84,35 @@ class OphydAsyncControlSystem(ControlSystem):
     def attach_array(self, devs: list[OASignal | None]) -> list[OASignal | None]:
         return self._attach(devs, True)
 
+    def get_catalog_config(self) -> Catalog | str | None:
+        return self._cfg.catalog
+
+    def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
+        if ref is None:
+            return None
+
+        if isinstance(ref, str):
+            if self._catalog is None:
+                raise PyAMLException(f"Control system '{self.name()}' has no catalog configured for key '{ref}'")
+            try:
+                dev = self._catalog.resolve(ref)
+            except AttributeError as exc:
+                raise PyAMLException(f"Control system '{self.name()}' catalog cannot resolve key '{ref}'") from exc
+            return self.attach([dev])[0]
+
+        if isinstance(ref, EpicsConfigR):
+            return self.attach([EpicsR(ref)])[0]
+        if isinstance(ref, EpicsConfigW):
+            return self.attach([EpicsW(ref)])[0]
+        if isinstance(ref, EpicsConfigRW):
+            return self.attach([EpicsRW(ref)])[0]
+        if isinstance(ref, TangoConfigR):
+            return self.attach([TangoR(ref)])[0]
+        if isinstance(ref, TangoConfigRW):
+            return self.attach([TangoRW(ref)])[0]
+
+        raise PyAMLException(f"Control system '{self.name()}' cannot build a device from {type(ref).__name__}")
+
     def _attach(self, devs: list[OASignal | None], is_array: bool) -> list[OASignal | None]:
         # Concatenate the prefix
         newDevs = []
@@ -93,6 +120,7 @@ class OphydAsyncControlSystem(ControlSystem):
             if d is not None:
                 sig_cfg = d._cfg
                 sig_cfg_cls = sig_cfg.__class__
+                effective_is_array = is_array or getattr(d, "is_array", False)
                 index_str = "" if sig_cfg.index is None else str(sig_cfg.index)
 
                 if isinstance(d._cfg, EpicsConfigR):
@@ -123,7 +151,7 @@ class OphydAsyncControlSystem(ControlSystem):
 
                 if key not in self._devices:
                     n_conf = dict(d._cfg) | config
-                    nr = sig_cls(sig_cfg_cls(**n_conf), is_array)
+                    nr = sig_cls(sig_cfg_cls(**n_conf), effective_is_array)
                     nr.build()
                     self._devices[key] = nr
 

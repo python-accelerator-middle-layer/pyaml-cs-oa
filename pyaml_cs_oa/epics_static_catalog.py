@@ -1,8 +1,7 @@
-from pydantic import ConfigDict
-
 from pyaml.common.exception import PyAMLException
 from pyaml.configuration.catalog import Catalog, CatalogConfigModel
 from pyaml.control.deviceaccess import DeviceAccess
+from pydantic import ConfigDict
 
 from .epics_static_catalog_entry import EpicsStaticCatalogEntry
 
@@ -71,9 +70,7 @@ class EpicsStaticCatalog(Catalog):
                 raise PyAMLException(
                     f"EpicsStaticCatalog '{self.get_name()}': duplicate key '{key}'"
                 )
-            sig = entry.get_device()
-            sig.build()
-            self._refs[key] = sig
+            self._refs[key] = entry.get_device()
 
     def resolve(self, key: str) -> DeviceAccess:
         try:
