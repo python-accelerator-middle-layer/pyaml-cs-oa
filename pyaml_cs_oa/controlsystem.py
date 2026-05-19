@@ -34,7 +34,7 @@ class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
         name: str,
         prefix: str = "",
         catalog: Catalog | None = None,
-        debug_level: str | None = None,
+        debug_level: str | int | None = None,
     ):
         """Create an ophyd-async control-system interface.
 
@@ -48,8 +48,8 @@ class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
         catalog : Catalog or None, optional
             Catalog instance or catalog name used to resolve PyAML device keys.
             If None specified a dynamic catalog is used.
-        debug_level : str or None, optional
-            Debug verbosity level.
+        debug_level : str | int | None, optional
+            Debug verbosity level. Such as INFO, DEBUG, WARNING, ERROR, CRITICAL. Or 10, 20, 30, 40, 50.
         """
 
         super().__init__()
