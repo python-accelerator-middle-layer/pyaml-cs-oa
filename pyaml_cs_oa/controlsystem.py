@@ -37,19 +37,17 @@ class ConfigModel(BaseModel):
     prefix : str
         Prefix added to the PV or attribute name. It can be a
         for instance, TANGO_HOST, or a PV prefix.
-    debug_level : int
-        Debug verbosity level.
+    debug_level : str | int | None
+        Debug verbosity level. Such as INFO, DEBUG, WARNING, ERROR, CRITICAL. Or 10, 20, 30, 40, 50.
     scalar_aggregator : str
-        Aggregator module for scalar values. If none specified, writings and
-        readings of sclar value are serialized.
+        Aggregator module for scalar values. If none specified, writings and readings of sclar value are serialized.
     vector_aggregator : str
-        Aggregator module for vecrors. If none specified, writings and readings
-        of vector are serialized,
+        Aggregator module for vecrors. If none specified, writings and readings of vector are serialized.
     """
 
     name: str
     prefix: str = ""
-    debug_level: str = None
+    debug_level: str | int | None = None
     scalar_aggregator: str | None = "pyaml_cs_oa.scalar_aggregator"
     vector_aggregator: str | None = None
 
