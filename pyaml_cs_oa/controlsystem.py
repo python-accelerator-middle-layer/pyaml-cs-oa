@@ -1,12 +1,12 @@
 import logging
 
 from pyaml.common.exception import PyAMLException
-from pyaml.configuration.catalog import Catalog
 from pyaml.control.controlsystem import ControlSystem
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel, ConfigDict
 
 from . import __version__
+from .catalog import Catalog
 from .epicsR import EpicsR
 from .epicsRW import EpicsRW
 from .epicsW import EpicsW
@@ -84,18 +84,15 @@ class OphydAsyncControlSystem(ControlSystem):
     def attach_array(self, devs: list[OASignal | None]) -> list[OASignal | None]:
         return self._attach(devs, True)
 
-    def get_catalog_config(self) -> Catalog | str | None:
-        return self._cfg.catalog
-
     def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         if ref is None:
             return None
 
         if isinstance(ref, str):
-            if self._catalog is None:
+            if self._cfg.catalog is None:
                 raise PyAMLException(f"Control system '{self.name()}' has no catalog configured for key '{ref}'")
             try:
-                dev = self._catalog.resolve(ref)
+                dev = self._cfg.catalog.resolve(ref)
             except AttributeError as exc:
                 raise PyAMLException(f"Control system '{self.name()}' catalog cannot resolve key '{ref}'") from exc
             return self.attach([dev])[0]

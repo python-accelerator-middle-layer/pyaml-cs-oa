@@ -1,7 +1,8 @@
 from pyaml.common.exception import PyAMLException
-from pyaml.configuration.catalog import Catalog, CatalogConfigModel
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import ConfigDict
+
+from .catalog import Catalog, CatalogConfigModel
 
 PYAMLCLASS = "TangoCatalog"
 
@@ -27,6 +28,7 @@ class ConfigModel(CatalogConfigModel):
 
 
 class TangoCatalog(Catalog):
+
     def __init__(self, cfg: ConfigModel):
         super().__init__(cfg)
         self._refs: dict[str, DeviceAccess] = {}
@@ -44,18 +46,14 @@ class TangoCatalog(Catalog):
 
     def _parse_key(self, key: str) -> tuple[str, int | None]:
         if not isinstance(key, str):
-            raise PyAMLException(
-                f"OA Tango catalog '{self.get_name()}' expects string keys, "
-                f"got {type(key).__name__}"
-            )
+            raise PyAMLException(f"OA Tango catalog '{self.get_name()}' expects string keys, got {type(key).__name__}")
         if "@" in key:
             attr_path, idx_str = key.rsplit("@", 1)
             try:
                 index = int(idx_str)
             except ValueError:
                 raise PyAMLException(
-                    f"OA Tango catalog '{self.get_name()}': invalid index "
-                    f"'{idx_str}' in key '{key}'"
+                    f"OA Tango catalog '{self.get_name()}': invalid index '{idx_str}' in key '{key}'"
                 ) from None
         else:
             attr_path = key
@@ -81,30 +79,20 @@ class TangoCatalog(Catalog):
         try:
             import tango
         except ImportError as exc:
-            raise PyAMLException(
-                "pytango is required for TangoCatalog in connected mode"
-            ) from exc
+            raise PyAMLException("pytango is required for TangoCatalog in connected mode") from exc
 
         try:
             attr_cfg = tango.AttributeProxy(attr_path).get_config()
         except tango.DevFailed as df:
-            raise PyAMLException(
-                f"OA Tango catalog '{self.get_name()}' cannot resolve "
-                f"'{attr_path}': {df}"
-            ) from df
+            raise PyAMLException(f"OA Tango catalog '{self.get_name()}' cannot resolve '{attr_path}': {df}") from df
 
         writable_types = {
             tango.AttrWriteType.READ_WRITE,
             tango.AttrWriteType.WRITE,
             tango.AttrWriteType.READ_WITH_WRITE,
         }
-        is_writable = (
-            getattr(attr_cfg, "writable", tango.AttrWriteType.WT_UNKNOWN)
-            in writable_types
-        )
-        is_array = (
-            getattr(attr_cfg, "data_format", None) == tango.AttrDataFormat.SPECTRUM
-        )
+        is_writable = getattr(attr_cfg, "writable", tango.AttrWriteType.WT_UNKNOWN) in writable_types
+        is_array = getattr(attr_cfg, "data_format", None) == tango.AttrDataFormat.SPECTRUM
 
         if is_writable:
             return self._make_rw(attr_path, is_array=is_array)
@@ -115,16 +103,13 @@ class TangoCatalog(Catalog):
             try:
                 import tango
             except ImportError as exc:
-                raise PyAMLException(
-                    "pytango is required for TangoCatalog in connected mode"
-                ) from exc
+                raise PyAMLException("pytango is required for TangoCatalog in connected mode") from exc
 
             try:
                 attr_cfg = tango.AttributeProxy(attr_path).get_config()
             except tango.DevFailed as df:
                 raise PyAMLException(
-                    f"OA Tango catalog '{self.get_name()}' cannot resolve "
-                    f"'{attr_path}@{index}': {df}"
+                    f"OA Tango catalog '{self.get_name()}' cannot resolve '{attr_path}@{index}': {df}"
                 ) from df
 
             data_format = getattr(attr_cfg, "data_format", None)

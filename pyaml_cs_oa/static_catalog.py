@@ -1,8 +1,8 @@
 from pyaml.common.exception import PyAMLException
-from pyaml.configuration.catalog import Catalog, CatalogConfigModel
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import ConfigDict
 
+from .catalog import Catalog, CatalogConfigModel
 from .static_catalog_entry import StaticCatalogEntry
 
 PYAMLCLASS = "StaticCatalog"
@@ -38,6 +38,4 @@ class StaticCatalog(Catalog):
         try:
             return self._refs[key]
         except KeyError as exc:
-            raise PyAMLException(
-                f"Catalog '{self.get_name()}' cannot resolve key '{key}'"
-            ) from exc
+            raise PyAMLException(f"Catalog '{self.get_name()}' cannot resolve key '{key}'") from exc

@@ -1,6 +1,5 @@
 import pytest
 from pyaml.common.exception import PyAMLException
-from pyaml.configuration.catalog import Catalog, CatalogConfigModel
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel
 
@@ -9,6 +8,7 @@ from pyaml_cs_oa.epicsR import ConfigModel as EpicsRConfig
 from pyaml_cs_oa.epicsR import EpicsR
 from pyaml_cs_oa.epicsRW import ConfigModel as EpicsRWConfig
 from pyaml_cs_oa.epicsW import ConfigModel as EpicsWConfig
+from pyaml_cs_oa.static_catalog import Catalog, CatalogConfigModel
 from pyaml_cs_oa.tangoR import ConfigModel as TangoRConfig
 from pyaml_cs_oa.tangoRW import ConfigModel as TangoRWConfig
 
@@ -39,19 +39,6 @@ def test_controlsystem_exposes_name_and_aggregator_modules() -> None:
     assert control_system.name() == "live"
     assert control_system.scalar_aggregator() == "pyaml_cs_oa.scalar_aggregator"
     assert control_system.vector_aggregator() == "vector.mod"
-
-
-def test_controlsystem_exposes_catalog_config_object() -> None:
-    catalog = _Catalog({})
-    control_system = OphydAsyncControlSystem(ConfigModel(name="live", catalog=catalog))
-
-    assert control_system.get_catalog_config() is catalog
-
-
-def test_controlsystem_exposes_catalog_config_name() -> None:
-    control_system = OphydAsyncControlSystem(ConfigModel(name="live", catalog="machine-catalog"))
-
-    assert control_system.get_catalog_config() == "machine-catalog"
 
 
 def test_attach_prefixes_epics_read_device(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -155,39 +142,22 @@ def test_get_device_constructs_and_attaches_epics_config(monkeypatch: pytest.Mon
 
 def test_get_device_resolves_string_through_catalog(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(EpicsR, "build", _no_connect_build)
-    control_system = OphydAsyncControlSystem(ConfigModel(name="live", prefix="P:"))
-    control_system.set_catalog(_Catalog({"read": EpicsR(EpicsRConfig(read_pvname="RB"))}))
-
+    cat = _Catalog({"read": EpicsR(EpicsRConfig(read_pvname="RB"))})
+    control_system = OphydAsyncControlSystem(ConfigModel(name="live", prefix="P:", catalog=cat))
     device = control_system.get_device("read")
-
     assert isinstance(device, EpicsR)
     assert device._cfg.read_pvname == "P:RB"
 
 
 def test_get_device_reuses_attached_catalog_device(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(EpicsR, "build", _no_connect_build)
-    control_system = OphydAsyncControlSystem(ConfigModel(name="live", prefix="P:"))
-    control_system.set_catalog(_Catalog({"read": EpicsR(EpicsRConfig(read_pvname="RB"))}))
+    cat = _Catalog({"read": EpicsR(EpicsRConfig(read_pvname="RB"))})
+    control_system = OphydAsyncControlSystem(ConfigModel(name="live", prefix="P:", catalog=cat))
 
     first = control_system.get_device("read")
     second = control_system.get_device("read")
 
     assert first is second
-
-
-def test_get_device_rejects_string_without_catalog() -> None:
-    control_system = OphydAsyncControlSystem(ConfigModel(name="live"))
-
-    with pytest.raises(PyAMLException, match="has no catalog configured"):
-        control_system.get_device("read")
-
-
-def test_get_device_rejects_catalog_without_resolve() -> None:
-    control_system = OphydAsyncControlSystem(ConfigModel(name="live"))
-    control_system.set_catalog(object())
-
-    with pytest.raises(PyAMLException, match="catalog cannot resolve"):
-        control_system.get_device("read")
 
 
 def test_get_device_rejects_unknown_reference_type() -> None:

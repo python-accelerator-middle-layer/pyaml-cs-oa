@@ -6,10 +6,10 @@ from pyaml.bpm.bpm import BPM
 from pyaml.bpm.bpm import ConfigModel as BPMConfig
 from pyaml.bpm.bpm_simple_model import BPMSimpleModel
 from pyaml.bpm.bpm_simple_model import ConfigModel as BPMSimpleModelConfig
-from pyaml.configuration.catalog import Catalog, CatalogConfigModel
 from pyaml.control.abstract_impl import RBpmArray
 from pyaml.control.deviceaccess import DeviceAccess
 
+from pyaml_cs_oa.catalog import Catalog, CatalogConfigModel
 from pyaml_cs_oa.controlsystem import ConfigModel, OphydAsyncControlSystem
 from pyaml_cs_oa.float_signal import FloatSignalContainer
 from pyaml_cs_oa.types import EpicsConfigR
@@ -120,17 +120,9 @@ def _attached_indexed_bpm(
 
 def _control_system_with_indexed_orbit(orbit_device: VectorDevice, bpm_count: int) -> IdentityAttachControlSystem:
     control_system = IdentityAttachControlSystem(ConfigModel(name="live"))
-    control_system.set_catalog(
-        StaticCatalog(
-            {
-                f"BPM{bpm_index}:X": IndexedVectorSignal(orbit_device, 2 * bpm_index)
-                for bpm_index in range(bpm_count)
-            }
-            | {
-                f"BPM{bpm_index}:Y": IndexedVectorSignal(orbit_device, (2 * bpm_index) + 1)
-                for bpm_index in range(bpm_count)
-            },
-        ),
+    control_system._cfg.catalog = StaticCatalog(
+        {f"BPM{bpm_index}:X": IndexedVectorSignal(orbit_device, 2 * bpm_index) for bpm_index in range(bpm_count)}
+        | {f"BPM{bpm_index}:Y": IndexedVectorSignal(orbit_device, (2 * bpm_index) + 1) for bpm_index in range(bpm_count)},
     )
     return control_system
 

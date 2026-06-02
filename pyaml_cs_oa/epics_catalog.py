@@ -1,7 +1,8 @@
 from pyaml.common.exception import PyAMLException
-from pyaml.configuration.catalog import Catalog, CatalogConfigModel
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import ConfigDict
+
+from .catalog import Catalog, CatalogConfigModel
 
 PYAMLCLASS = "EpicsCatalog"
 
