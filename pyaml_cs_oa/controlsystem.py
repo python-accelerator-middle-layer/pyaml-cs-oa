@@ -1,5 +1,4 @@
 import logging
-from typing import Type
 
 from pyaml.common.exception import PyAMLException
 from pyaml.control.controlsystem import ControlSystem
@@ -111,7 +110,6 @@ class OphydAsyncControlSystem(ControlSystem):
             if sig_cfg is not None:
                 sig_cfg_cls = sig_cfg.__class__
                 index_str = "" if sig_cfg.index is None else str(sig_cfg.index)
-                sig_cls: Type[OASignal] | None = None
 
                 if isinstance(sig_cfg, EpicsConfigR):
                     key = self._cfg.prefix + sig_cfg.read_pvname + index_str
