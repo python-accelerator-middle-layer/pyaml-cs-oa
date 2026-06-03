@@ -1,4 +1,5 @@
 from typing import Any
+from pydantic import BaseModel, ConfigDict
 
 import numpy as np
 from pyaml.arrays.bpm_array import BPMArray
@@ -9,7 +10,7 @@ from pyaml.bpm.bpm_simple_model import ConfigModel as BPMSimpleModelConfig
 from pyaml.control.abstract_impl import RBpmArray
 from pyaml.control.deviceaccess import DeviceAccess
 
-from pyaml_cs_oa.catalog import Catalog, CatalogConfigModel
+from pyaml_cs_oa.catalog import Catalog
 from pyaml_cs_oa.controlsystem import ConfigModel, OphydAsyncControlSystem
 from pyaml_cs_oa.float_signal import FloatSignalContainer
 from pyaml_cs_oa.types import EpicsConfigR
@@ -63,15 +64,18 @@ class _VectorReadSide:
     def get(self) -> np.ndarray:
         return self._source.get()
 
+class IndexedVectorSignalConfig(EpicsConfigR):
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+    source : VectorDevice
 
 class IndexedVectorSignal(FloatSignalContainer):
     """FloatSignalContainer fake resolving one indexed value from a shared vector."""
 
-    def __init__(self, source: VectorDevice, index: int) -> None:
-        super().__init__(EpicsConfigR(read_pvname=source.name(), index=index, unit=source.unit()), is_array=True)
+    def __init__(self, config: IndexedVectorSignalConfig) -> None:
+        super().__init__(config, is_array=True)
         self._readable = True
         self._writable = False
-        self.RB = _VectorReadSide(source)
+        self.RB = _VectorReadSide(config.source)
         self.SP = None
 
     def name(self) -> str:
@@ -80,22 +84,20 @@ class IndexedVectorSignal(FloatSignalContainer):
 
 class StaticCatalog(Catalog):
     def __init__(self, devices: dict[str, DeviceAccess]) -> None:
-        super().__init__(CatalogConfigModel(name="test-catalog"))
         self._devices = devices
 
-    def resolve(self, key: str) -> DeviceAccess:
+    def resolve(self, key: str) -> BaseModel:
         return self._devices[key]
 
 
 class IdentityAttachControlSystem(OphydAsyncControlSystem):
     """Control system fake that keeps pre-built DeviceAccess objects attached."""
 
-    def attach(self, devs: list[DeviceAccess]) -> list[DeviceAccess]:
-        return devs
+    # attach public methods are depecrated
 
-    def attach_array(self, devs: list[DeviceAccess]) -> list[DeviceAccess]:
-        return devs
-
+    def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
+       config =  self._cfg.catalog.resolve(ref)
+       return IndexedVectorSignal(config)
 
 def _attached_indexed_bpm(
     control_system: IdentityAttachControlSystem,
@@ -119,11 +121,17 @@ def _attached_indexed_bpm(
 
 
 def _control_system_with_indexed_orbit(orbit_device: VectorDevice, bpm_count: int) -> IdentityAttachControlSystem:
-    control_system = IdentityAttachControlSystem(ConfigModel(name="live"))
-    control_system._cfg.catalog = StaticCatalog(
-        {f"BPM{bpm_index}:X": IndexedVectorSignal(orbit_device, 2 * bpm_index) for bpm_index in range(bpm_count)}
-        | {f"BPM{bpm_index}:Y": IndexedVectorSignal(orbit_device, (2 * bpm_index) + 1) for bpm_index in range(bpm_count)},
+    catalog = StaticCatalog(
+        {f"BPM{bpm_index}:X": IndexedVectorSignalConfig(source=orbit_device, 
+                                                        read_pvname=orbit_device.name(), 
+                                                        unit=orbit_device.unit(), 
+                                                        index=2 * bpm_index) for bpm_index in range(bpm_count)}
+      | {f"BPM{bpm_index}:Y": IndexedVectorSignalConfig(source=orbit_device, 
+                                                        read_pvname=orbit_device.name(), 
+                                                        unit=orbit_device.unit(), 
+                                                        index=2 * bpm_index + 1) for bpm_index in range(bpm_count)},
     )
+    control_system = IdentityAttachControlSystem(ConfigModel(name="live",catalog=catalog))
     return control_system
 
 

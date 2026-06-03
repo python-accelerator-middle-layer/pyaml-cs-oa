@@ -8,8 +8,7 @@ from pyaml_cs_oa.types import (
     EpicsConfigR,
     EpicsConfigRW,
     EpicsConfigW,
-    TangoConfigR,
-    TangoConfigRW,
+    TangoConfigAtt,
 )
 
 
@@ -72,23 +71,6 @@ def test_epics_read_write_factory_reuses_single_rw_signal(
     assert spy.calls[0]["write_pv"] == "PV:SP"
 
 
-def test_tango_read_only_factory_builds_readback(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    spy = SignalFactorySpy("tango-r")
-    monkeypatch.setattr(tango, "tango_signal_r", spy)
-
-    setpoint, readback = tango.get_SP_RB(
-        TangoConfigR(attribute="sys/tg_test/1/value"),
-        False,
-    )
-
-    assert setpoint is None
-    assert isinstance(readback, OAReadback)
-    assert readback._r_sig == "tango-r"
-    assert spy.calls[0]["read_trl"] == "sys/tg_test/1/value"
-
-
 def test_tango_read_write_factory_reuses_single_rw_signal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -96,7 +78,7 @@ def test_tango_read_write_factory_reuses_single_rw_signal(
     monkeypatch.setattr(tango, "tango_signal_rw", spy)
 
     setpoint, readback = tango.get_SP_RB(
-        TangoConfigRW(attribute="sys/tg_test/1/value"),
+        TangoConfigAtt(attribute="sys/tg_test/1/value"),
         False,
     )
 

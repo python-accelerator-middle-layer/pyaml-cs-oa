@@ -27,15 +27,7 @@ class EpicsConfigRW(BaseModel):
     index: int | None = None
     unit: str = ""
 
-
-class TangoConfigR(BaseModel):
-    attribute: str
-    timeout_ms: int = 3000
-    index: int | None = None
-    unit: str = ""
-
-
-class TangoConfigRW(BaseModel):
+class TangoConfigAtt(BaseModel):
     attribute: str
     timeout_ms: int = 3000
     range: list[float] | None = None
@@ -43,4 +35,4 @@ class TangoConfigRW(BaseModel):
     unit: str = ""
 
 
-ControlSysConfig = EpicsConfigR | EpicsConfigW | EpicsConfigRW | TangoConfigR | TangoConfigRW
+ControlSysConfig = EpicsConfigR | EpicsConfigW | EpicsConfigRW | TangoConfigAtt

@@ -5,8 +5,7 @@ from .types import (
     EpicsConfigR,
     EpicsConfigRW,
     EpicsConfigW,
-    TangoConfigR,
-    TangoConfigRW,
+    TangoConfigAtt,
 )
 
 
@@ -21,8 +20,8 @@ class OASignal(DeviceAccess):
         self.is_array = is_array or cfg.index is not None
 
     def build(self):
-        self._readable: bool = isinstance(self._cfg, (EpicsConfigR, TangoConfigR))
-        self._writable: bool = isinstance(self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigRW))
+        self._readable: bool = isinstance(self._cfg, (EpicsConfigR, TangoConfigAtt))
+        self._writable: bool = isinstance(self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigAtt))
 
         cs_name = self.get_cs()
         if cs_name == "tango":
@@ -50,7 +49,7 @@ class OASignal(DeviceAccess):
             return self._cfg.read_pvname
         elif isinstance(self._cfg, EpicsConfigW):
             return self._cfg.write_pvname
-        elif isinstance(self._cfg, (TangoConfigR, TangoConfigRW)):
+        elif isinstance(self._cfg, TangoConfigAtt):
             return self._cfg.attribute
         else:
             raise ValueError(f"Unsupported control system config type: {type(self._cfg)!r}")
@@ -59,7 +58,7 @@ class OASignal(DeviceAccess):
         return self._cfg.unit
 
     def get_range(self) -> list:
-        if isinstance(self._cfg, (EpicsConfigW, EpicsConfigRW, TangoConfigRW)):
+        if isinstance(self._cfg, (EpicsConfigW, EpicsConfigRW, TangoConfigAtt)):
             if self._cfg.range:
                 return self._cfg.range
         return [None, None]

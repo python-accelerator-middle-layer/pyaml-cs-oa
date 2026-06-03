@@ -1,26 +1,7 @@
 """Configuration helpers for backend-provided catalogs."""
 
 from abc import ABCMeta, abstractmethod
-
-from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import BaseModel, ConfigDict
-
-
-class CatalogConfigModel(BaseModel):
-    r"""
-    Base configuration model for named catalogs.
-
-    Parameters
-    ----------
-    name : str
-        Unique catalog identifier used in accelerator and control-system
-        configuration.
-    """
-
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-
-    name: str
-
+from pydantic import BaseModel
 
 class Catalog(metaclass=ABCMeta):
     r"""
@@ -33,23 +14,9 @@ class Catalog(metaclass=ABCMeta):
     PyAML core.
     """
 
-    def __init__(self, cfg: CatalogConfigModel):
-        self._cfg = cfg
-
-    def get_name(self) -> str:
-        r"""
-        Return the catalog name.
-
-        Returns
-        -------
-        str
-            Catalog identifier.
-        """
-        return self._cfg.name
-
     @abstractmethod
-    def resolve(self, key: str) -> DeviceAccess:
+    def resolve(self, key: str) -> BaseModel:
         """
-        Return
+        Return a configuration model for a DeviceAccess
         """
         pass

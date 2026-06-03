@@ -1,18 +1,16 @@
 from pyaml.common.exception import PyAMLException
 from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import ConfigDict
+from pydantic import ConfigDict, BaseModel
 
-from .catalog import Catalog, CatalogConfigModel
+from .catalog import Catalog
 from .static_catalog_entry import StaticCatalogEntry
 
 PYAMLCLASS = "StaticCatalog"
 
 
-class ConfigModel(CatalogConfigModel):
+class ConfigModel(BaseModel):
     """
     Static catalog: a fixed mapping of keys to DeviceAccess instances.
-
-    Works with any DeviceAccess (EpicsR, TangoRW, IndexedFloatSignal, …).
     Keys are resolved at construction time; no control-system connection is required.
     The catalog instance is shared across all control systems that reference it.
     """
@@ -34,8 +32,8 @@ class StaticCatalog(Catalog):
                 raise PyAMLException(f"StaticCatalog.entries contains duplicate key '{key}'")
             self._refs[key] = entry.get_device()
 
-    def resolve(self, key: str) -> DeviceAccess:
+    def resolve(self, key: str) -> BaseModel:
         try:
-            return self._refs[key]
+            return self._refs[key]._cfg
         except KeyError as exc:
             raise PyAMLException(f"Catalog '{self.get_name()}' cannot resolve key '{key}'") from exc

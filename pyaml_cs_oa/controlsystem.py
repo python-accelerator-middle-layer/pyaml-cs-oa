@@ -11,14 +11,12 @@ from .epicsR import EpicsR
 from .epicsRW import EpicsRW
 from .epicsW import EpicsW
 from .signal import OASignal
-from .tangoR import TangoR
-from .tangoRW import TangoRW
+from .tangoAtt import TangoAtt
 from .types import (
     EpicsConfigR,
     EpicsConfigRW,
     EpicsConfigW,
-    TangoConfigR,
-    TangoConfigRW,
+    TangoConfigAtt,
 )
 
 PYAMLCLASS: str = "OphydAsyncControlSystem"
@@ -37,8 +35,9 @@ class ConfigModel(BaseModel):
     prefix : str
         Prefix added to the PV or attribute name. It can be a
         for instance, TANGO_HOST, or a PV prefix.
-    catalog : Catalog | str | None
+    catalog : Catalog | None
         Catalog instance or catalog name used to resolve PyAML device keys.
+        If None specified a dynamic catalog is used.
     debug_level : str
         Debug verbosity level.
     scalar_aggregator : str
@@ -53,7 +52,7 @@ class ConfigModel(BaseModel):
 
     name: str
     prefix: str = ""
-    catalog: Catalog | str | None = None
+    catalog: Catalog | None = None
     debug_level: str | None = None
     scalar_aggregator: str | None = "pyaml_cs_oa.scalar_aggregator"
     vector_aggregator: str | None = None
@@ -79,76 +78,68 @@ class OphydAsyncControlSystem(ControlSystem):
         )
 
     def attach(self, devs: list[OASignal | None]) -> list[OASignal | None]:
-        return self._attach(devs, False)
+        return self._attach(devs._cfg, False)
 
     def attach_array(self, devs: list[OASignal | None]) -> list[OASignal | None]:
-        return self._attach(devs, True)
+        return self._attach(devs._cfg, True)
 
     def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         if ref is None:
             return None
 
+        # Build config from a string using using a DynamicCatalog
         if isinstance(ref, str):
             if self._cfg.catalog is None:
-                raise PyAMLException(f"Control system '{self.name()}' has no catalog configured for key '{ref}'")
+                raise PyAMLException(f"Control system '{self.name()}' has no catalog when trying to resolve '{ref}'")
             try:
-                dev = self._cfg.catalog.resolve(ref)
+                ref = self._cfg.catalog.resolve(ref)
             except AttributeError as exc:
                 raise PyAMLException(f"Control system '{self.name()}' catalog cannot resolve key '{ref}'") from exc
-            return self.attach([dev])[0]
 
         if isinstance(ref, EpicsConfigR):
-            return self.attach([EpicsR(ref)])[0]
+            return self._attach([ref],ref.index is not None)[0]
         if isinstance(ref, EpicsConfigW):
-            return self.attach([EpicsW(ref)])[0]
+            return self._attach([ref],ref.index is not None)[0]
         if isinstance(ref, EpicsConfigRW):
-            return self.attach([EpicsRW(ref)])[0]
-        if isinstance(ref, TangoConfigR):
-            return self.attach([TangoR(ref)])[0]
-        if isinstance(ref, TangoConfigRW):
-            return self.attach([TangoRW(ref)])[0]
+            return self._attach([ref],ref.index is not None)[0]
+        if isinstance(ref, TangoConfigAtt):
+            return self._attach([ref],ref.index is not None)[0]
 
         raise PyAMLException(f"Control system '{self.name()}' cannot build a device from {type(ref).__name__}")
 
-    def _attach(self, devs: list[OASignal | None], is_array: bool) -> list[OASignal | None]:
+    def _attach(self, configs: list[BaseModel | None], is_array: bool) -> list[OASignal | None]:
         # Concatenate the prefix
         newDevs = []
-        for d in devs:
-            if d is not None:
-                sig_cfg = d._cfg
+        for sig_cfg in configs:
+            if sig_cfg is not None:
                 sig_cfg_cls = sig_cfg.__class__
-                effective_is_array = is_array or getattr(d, "is_array", False)
                 index_str = "" if sig_cfg.index is None else str(sig_cfg.index)
 
-                if isinstance(d._cfg, EpicsConfigR):
-                    key = self._cfg.prefix + d._cfg.read_pvname + index_str
+                if isinstance(sig_cfg, EpicsConfigR):
+                    key = self._cfg.prefix + sig_cfg.read_pvname + index_str
                     sig_cls = EpicsR
-                    config = dict(read_pvname=self._cfg.prefix + d._cfg.read_pvname)
-                elif isinstance(d._cfg, EpicsConfigW):
-                    key = self._cfg.prefix + d._cfg.write_pvname + index_str
+                    config = dict(read_pvname=self._cfg.prefix + sig_cfg.read_pvname)
+                elif isinstance(sig_cfg, EpicsConfigW):
+                    key = self._cfg.prefix + sig_cfg.write_pvname + index_str
                     sig_cls = EpicsW
-                    config = dict(write_pvname=self._cfg.prefix + d._cfg.write_pvname)
-                elif isinstance(d._cfg, EpicsConfigRW):
-                    key = self._cfg.prefix + d._cfg.read_pvname + d._cfg.write_pvname + index_str
+                    config = dict(write_pvname=self._cfg.prefix + sig_cfg.write_pvname)
+                elif isinstance(sig_cfg, EpicsConfigRW):
+                    key = self._cfg.prefix + sig_cfg.read_pvname + sig_cfg.write_pvname + index_str
                     sig_cls = EpicsRW
                     config = dict(
-                        read_pvname=self._cfg.prefix + d._cfg.read_pvname,
-                        write_pvname=self._cfg.prefix + d._cfg.write_pvname,
+                        read_pvname=self._cfg.prefix + sig_cfg.read_pvname,
+                        write_pvname=self._cfg.prefix + sig_cfg.write_pvname,
                     )
-                elif isinstance(d._cfg, TangoConfigR):
-                    key = self._cfg.prefix + d._cfg.attribute + index_str
-                    sig_cls = TangoR
-                    config = dict(attribute=self._cfg.prefix + d._cfg.attribute)
-                elif isinstance(d._cfg, TangoConfigRW):
-                    key = self._cfg.prefix + d._cfg.attribute + index_str
-                    sig_cls = TangoRW
-                    config = dict(attribute=self._cfg.prefix + d._cfg.attribute)
+                elif isinstance(sig_cfg, TangoConfigAtt):
+                    key = self._cfg.prefix + sig_cfg.attribute + index_str
+                    sig_cls = TangoAtt
+                    config = dict(attribute=self._cfg.prefix + sig_cfg.attribute)
                 else:
                     raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(sig_cfg)}")
 
                 if key not in self._devices:
-                    n_conf = dict(d._cfg) | config
-                    nr = sig_cls(sig_cfg_cls(**n_conf), effective_is_array)
+                    n_conf = dict(sig_cfg) | config
+                    nr = sig_cls(sig_cfg_cls(**n_conf), is_array)
                     nr.build()
                     self._devices[key] = nr
 

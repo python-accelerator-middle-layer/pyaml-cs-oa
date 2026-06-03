@@ -5,9 +5,8 @@ from pyaml_cs_oa.epicsR import EpicsR
 from pyaml_cs_oa.epicsRW import ConfigModel as EpicsRWConfig
 from pyaml_cs_oa.epicsW import ConfigModel as EpicsWConfig
 from pyaml_cs_oa.epicsW import EpicsW
-from pyaml_cs_oa.tangoR import ConfigModel as TangoRConfig
-from pyaml_cs_oa.tangoR import TangoR
-from pyaml_cs_oa.tangoRW import ConfigModel as TangoRWConfig
+from pyaml_cs_oa.tangoAtt import ConfigModel as TangoAttConfig
+from pyaml_cs_oa.tangoAtt import TangoAtt
 from pyaml_cs_oa.types import EpicsConfigW
 
 
@@ -48,7 +47,7 @@ def test_tango_signal_build_uses_tango_factory(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setattr("pyaml_cs_oa.tango.get_SP_RB", fake_get_sp_rb)
 
-    signal = TangoR(TangoRConfig(attribute="sys/tg_test/1/value"), is_array=True)
+    signal = TangoAtt(TangoAttConfig(attribute="sys/tg_test/1/value"), is_array=True)
     signal.build()
 
     assert signal.SP is None
@@ -63,7 +62,7 @@ def test_measure_name_uses_epics_read_pv_for_readable_signal() -> None:
 
 
 def test_measure_name_uses_tango_attribute() -> None:
-    signal = TangoR(TangoRConfig(attribute="sys/tg_test/1/value"))
+    signal = TangoAtt(TangoAttConfig(attribute="sys/tg_test/1/value"))
 
     assert signal.measure_name() == "sys/tg_test/1/value"
 
