@@ -77,22 +77,26 @@ class OphydAsyncControlSystem(ControlSystem):
             f" and prefix='{self._cfg.prefix}'",
         )
 
+    
     def attach(self, devs: list[OASignal | None]) -> list[OASignal | None]:
-        return self._attach(devs._cfg, False)
+        # Deprecated function        
+        return self._attach([d._cfg for d in devs], False)
 
     def attach_array(self, devs: list[OASignal | None]) -> list[OASignal | None]:
-        return self._attach(devs._cfg, True)
-
+        # Deprecated function 
+        return self._attach([d._cfg for d in devs], True)
+    
     def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         if ref is None:
             return None
 
-        # Build config from a string using using a DynamicCatalog
         if isinstance(ref, str):
+            # Retrieve a config from a key using using a Catalog
             if self._cfg.catalog is None:
                 raise PyAMLException(f"Control system '{self.name()}' has no catalog when trying to resolve '{ref}'")
             try:
                 ref = self._cfg.catalog.resolve(ref)
+                print(f"Resolve:{ref}")
             except AttributeError as exc:
                 raise PyAMLException(f"Control system '{self.name()}' catalog cannot resolve key '{ref}'") from exc
 

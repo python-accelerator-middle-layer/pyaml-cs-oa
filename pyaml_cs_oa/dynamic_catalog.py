@@ -65,7 +65,7 @@ def _extract_unit(token: str) -> Tuple[str,str]:
         end_idx = token.index(']', start_idx)
         return (token[start_idx:end_idx],token[:start_idx-1])
     except ValueError:
-        return "" # No unit
+        return "",token # No unit
 
 
 # ── PV spec parser ────────────────────────────────────────────────────────────
