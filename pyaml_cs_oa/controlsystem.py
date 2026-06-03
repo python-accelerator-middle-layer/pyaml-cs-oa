@@ -1,4 +1,5 @@
 import logging
+from typing import Type
 
 from pyaml.common.exception import PyAMLException
 from pyaml.control.controlsystem import ControlSystem
@@ -12,12 +13,7 @@ from .epicsRW import EpicsRW
 from .epicsW import EpicsW
 from .signal import OASignal
 from .tangoAtt import TangoAtt
-from .types import (
-    EpicsConfigR,
-    EpicsConfigRW,
-    EpicsConfigW,
-    TangoConfigAtt,
-)
+from .types import ControlSysConfig, EpicsConfigR, EpicsConfigRW, EpicsConfigW, TangoConfigAtt
 
 PYAMLCLASS: str = "OphydAsyncControlSystem"
 
@@ -64,11 +60,10 @@ class OphydAsyncControlSystem(ControlSystem):
     def __init__(self, cfg: ConfigModel):
         super().__init__()
         self._cfg = cfg
-        self._devices = {}  # Dict containing all attached DeviceAccess
+        self._devices: dict[str, DeviceAccess] = {}  # Dict containing all attached DeviceAccess
 
         if self._cfg.debug_level:
             log_level = getattr(logging, self._cfg.debug_level, logging.WARNING)
-            logger.parent.setLevel(log_level)
             logger.setLevel(log_level)
 
         logger.log(
@@ -79,11 +74,11 @@ class OphydAsyncControlSystem(ControlSystem):
 
     def attach(self, devs: list[OASignal | None]) -> list[OASignal | None]:
         # Deprecated function
-        return self._attach([d._cfg for d in devs], False)
+        return self._attach([d._cfg if d is not None else None for d in devs], False)
 
     def attach_array(self, devs: list[OASignal | None]) -> list[OASignal | None]:
         # Deprecated function
-        return self._attach([d._cfg for d in devs], True)
+        return self._attach([d._cfg if d is not None else None for d in devs], True)
 
     def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         if ref is None:
@@ -95,7 +90,6 @@ class OphydAsyncControlSystem(ControlSystem):
                 raise PyAMLException(f"Control system '{self.name()}' has no catalog when trying to resolve '{ref}'")
             try:
                 ref = self._cfg.catalog.resolve(ref)
-                print(f"Resolve:{ref}")
             except AttributeError as exc:
                 raise PyAMLException(f"Control system '{self.name()}' catalog cannot resolve key '{ref}'") from exc
 
@@ -110,13 +104,14 @@ class OphydAsyncControlSystem(ControlSystem):
 
         raise PyAMLException(f"Control system '{self.name()}' cannot build a device from {type(ref).__name__}")
 
-    def _attach(self, configs: list[BaseModel | None], is_array: bool) -> list[OASignal | None]:
+    def _attach(self, configs: list[ControlSysConfig | None], is_array: bool) -> list[OASignal | None]:
         # Concatenate the prefix
         newDevs = []
         for sig_cfg in configs:
             if sig_cfg is not None:
                 sig_cfg_cls = sig_cfg.__class__
                 index_str = "" if sig_cfg.index is None else str(sig_cfg.index)
+                sig_cls: Type[OASignal] | None = None
 
                 if isinstance(sig_cfg, EpicsConfigR):
                     key = self._cfg.prefix + sig_cfg.read_pvname + index_str
