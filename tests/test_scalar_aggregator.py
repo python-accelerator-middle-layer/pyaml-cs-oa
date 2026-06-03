@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import numpy as np
 import pytest
 from pyaml import PyAMLException
@@ -16,16 +14,18 @@ class FakeScalarSignal(FloatSignalContainer):
     def __init__(self, value: float, writable: bool = True) -> None:
         super().__init__(EpicsConfigR(read_pvname="PV:RB"), is_array=False)
         self._writable = writable
-        self.SP = _FakeSide(value)
-        self.RB = _FakeSide(value)
+        self.SP = _FakeSide(value, signal_key=object())
+        self.RB = _FakeSide(value, signal_key=object())
 
     def get_range(self) -> list[float | None]:
         return [None, None]
 
 
 class _FakeSide:
-    def __init__(self, value: float) -> None:
+    def __init__(self, value: float, signal_key: object) -> None:
         self.value = value
+        self._r_sig = signal_key
+        self._w_sig = signal_key
         self.completed_values: list[float] = []
 
     async def async_get(self) -> float:
@@ -69,7 +69,7 @@ class WrongDevice(DeviceAccess):
 def test_add_devices_rejects_single_wrong_device() -> None:
     aggregator = OAScalarAggregator()
 
-    with pytest.raises(PyAMLException, match="Device must be an instance"):
+    with pytest.raises(PyAMLException, match="All devices must be instances"):
         aggregator.add_devices(WrongDevice())
 
 

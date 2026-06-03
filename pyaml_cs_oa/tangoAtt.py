@@ -1,15 +1,15 @@
 from .float_signal import FloatSignalContainer
-from .types import EpicsConfigW
+from .types import TangoConfigAtt
 
-PYAMLCLASS: str = "EpicsW"
-
-
-class ConfigModel(EpicsConfigW): ...
+PYAMLCLASS: str = "TangoRW"
 
 
-class EpicsW(FloatSignalContainer):
+class ConfigModel(TangoConfigAtt): ...
+
+
+class TangoAtt(FloatSignalContainer):
     def __init__(self, cfg: ConfigModel, is_array: bool = False):
         super().__init__(cfg, is_array)
 
     def get_cs(self) -> str:
-        return "epics"
+        return "tango"

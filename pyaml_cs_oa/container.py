@@ -25,7 +25,7 @@ def _looks_disconnected(exc: BaseException) -> bool:
 async def _recover_once(
     run: Callable[[], Awaitable[T]],
     reconnect: Callable[[], Awaitable[None]],
-    peer: OASignal,
+    peer,
 ) -> T:
     try:
         return await run()
@@ -56,6 +56,7 @@ class OAReadback:
     async def _run_get(self) -> SignalDatatypeT:
         await self._r_sig.connect()
         backend = self._r_sig._connector.backend
+        print(f"Read {self._r_sig.name}")
         return await backend.get_value()
 
     async def async_get(self) -> SignalDatatypeT:
@@ -129,7 +130,8 @@ class OASetpoint:
         )
 
     async def _reconnect_both(self) -> None:
-        await asyncio.gather(self._w_sig.connect(), self._r_sig.connect())
+        if self._r_sig:
+            await asyncio.gather(self._w_sig.connect(), self._r_sig.connect())
 
     async def _rebuild_both(self) -> None:
         w_rebuild = getattr(self._w_sig, "__peer__", None)

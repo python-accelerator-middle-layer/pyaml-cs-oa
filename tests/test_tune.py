@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import time
 
 from pyaml.accelerator import Accelerator
@@ -15,7 +13,7 @@ def test_esrf_tune_correction_live(monkeypatch) -> None:
     accelerator = Accelerator.load("EBSTune-ophyd.yaml", use_fast_loader=False)
     tune = accelerator.live.get_tune_tuning("TUNE")
 
-    tune.response.load_json("tunemat.json")
+    assert tune.response_matrix is not None
 
     assert_tune_pair(tune.readback())
     tune.set([0.17, 0.32])
