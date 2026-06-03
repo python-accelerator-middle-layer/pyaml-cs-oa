@@ -27,6 +27,7 @@ class EpicsConfigRW(BaseModel):
     index: int | None = None
     unit: str = ""
 
+
 class TangoConfigAtt(BaseModel):
     attribute: str
     timeout_ms: int = 3000

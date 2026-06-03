@@ -1,7 +1,9 @@
 """Configuration helpers for backend-provided catalogs."""
 
 from abc import ABCMeta, abstractmethod
+
 from pydantic import BaseModel
+
 
 class Catalog(metaclass=ABCMeta):
     r"""

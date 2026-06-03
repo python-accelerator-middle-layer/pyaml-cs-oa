@@ -1,6 +1,6 @@
 from pyaml.common.exception import PyAMLException
 from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from .catalog import Catalog
 from .static_catalog_entry import StaticCatalogEntry

@@ -1,5 +1,4 @@
 from typing import Any
-from pydantic import BaseModel, ConfigDict
 
 import numpy as np
 from pyaml.arrays.bpm_array import BPMArray
@@ -9,6 +8,7 @@ from pyaml.bpm.bpm_simple_model import BPMSimpleModel
 from pyaml.bpm.bpm_simple_model import ConfigModel as BPMSimpleModelConfig
 from pyaml.control.abstract_impl import RBpmArray
 from pyaml.control.deviceaccess import DeviceAccess
+from pydantic import BaseModel, ConfigDict
 
 from pyaml_cs_oa.catalog import Catalog
 from pyaml_cs_oa.controlsystem import ConfigModel, OphydAsyncControlSystem
@@ -64,9 +64,11 @@ class _VectorReadSide:
     def get(self) -> np.ndarray:
         return self._source.get()
 
+
 class IndexedVectorSignalConfig(EpicsConfigR):
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-    source : VectorDevice
+    source: VectorDevice
+
 
 class IndexedVectorSignal(FloatSignalContainer):
     """FloatSignalContainer fake resolving one indexed value from a shared vector."""
@@ -96,8 +98,9 @@ class IdentityAttachControlSystem(OphydAsyncControlSystem):
     # attach public methods are depecrated
 
     def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
-       config =  self._cfg.catalog.resolve(ref)
-       return IndexedVectorSignal(config)
+        config = self._cfg.catalog.resolve(ref)
+        return IndexedVectorSignal(config)
+
 
 def _attached_indexed_bpm(
     control_system: IdentityAttachControlSystem,
@@ -122,16 +125,20 @@ def _attached_indexed_bpm(
 
 def _control_system_with_indexed_orbit(orbit_device: VectorDevice, bpm_count: int) -> IdentityAttachControlSystem:
     catalog = StaticCatalog(
-        {f"BPM{bpm_index}:X": IndexedVectorSignalConfig(source=orbit_device, 
-                                                        read_pvname=orbit_device.name(), 
-                                                        unit=orbit_device.unit(), 
-                                                        index=2 * bpm_index) for bpm_index in range(bpm_count)}
-      | {f"BPM{bpm_index}:Y": IndexedVectorSignalConfig(source=orbit_device, 
-                                                        read_pvname=orbit_device.name(), 
-                                                        unit=orbit_device.unit(), 
-                                                        index=2 * bpm_index + 1) for bpm_index in range(bpm_count)},
+        {
+            f"BPM{bpm_index}:X": IndexedVectorSignalConfig(
+                source=orbit_device, read_pvname=orbit_device.name(), unit=orbit_device.unit(), index=2 * bpm_index
+            )
+            for bpm_index in range(bpm_count)
+        }
+        | {
+            f"BPM{bpm_index}:Y": IndexedVectorSignalConfig(
+                source=orbit_device, read_pvname=orbit_device.name(), unit=orbit_device.unit(), index=2 * bpm_index + 1
+            )
+            for bpm_index in range(bpm_count)
+        },
     )
-    control_system = IdentityAttachControlSystem(ConfigModel(name="live",catalog=catalog))
+    control_system = IdentityAttachControlSystem(ConfigModel(name="live", catalog=catalog))
     return control_system
 
 

@@ -77,15 +77,14 @@ class OphydAsyncControlSystem(ControlSystem):
             f" and prefix='{self._cfg.prefix}'",
         )
 
-    
     def attach(self, devs: list[OASignal | None]) -> list[OASignal | None]:
-        # Deprecated function        
+        # Deprecated function
         return self._attach([d._cfg for d in devs], False)
 
     def attach_array(self, devs: list[OASignal | None]) -> list[OASignal | None]:
-        # Deprecated function 
+        # Deprecated function
         return self._attach([d._cfg for d in devs], True)
-    
+
     def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         if ref is None:
             return None
@@ -101,13 +100,13 @@ class OphydAsyncControlSystem(ControlSystem):
                 raise PyAMLException(f"Control system '{self.name()}' catalog cannot resolve key '{ref}'") from exc
 
         if isinstance(ref, EpicsConfigR):
-            return self._attach([ref],ref.index is not None)[0]
+            return self._attach([ref], ref.index is not None)[0]
         if isinstance(ref, EpicsConfigW):
-            return self._attach([ref],ref.index is not None)[0]
+            return self._attach([ref], ref.index is not None)[0]
         if isinstance(ref, EpicsConfigRW):
-            return self._attach([ref],ref.index is not None)[0]
+            return self._attach([ref], ref.index is not None)[0]
         if isinstance(ref, TangoConfigAtt):
-            return self._attach([ref],ref.index is not None)[0]
+            return self._attach([ref], ref.index is not None)[0]
 
         raise PyAMLException(f"Control system '{self.name()}' cannot build a device from {type(ref).__name__}")
 

@@ -20,14 +20,14 @@ class ConfigModel(BaseModel):
 class OAScalarAggregator(DeviceAccessList):
     def __init__(self, cfg: ConfigModel = None):
         super().__init__()
-        self._r_signal_list = {} # List of signal to read
-        self._w_signal_list = {} # List of signal to read/write
+        self._r_signal_list = {}  # List of signal to read
+        self._w_signal_list = {}  # List of signal to read/write
         self._writable = None
 
-    def _add_to_dev_list(self,d:FloatSignalContainer):
+    def _add_to_dev_list(self, d: FloatSignalContainer):
 
         # Check type and read/write
-        if not isinstance(d,FloatSignalContainer):
+        if not isinstance(d, FloatSignalContainer):
             raise PyAMLException("All devices must be instances of FloatSignalContainer.")
 
         if self._writable is None:
@@ -39,15 +39,15 @@ class OAScalarAggregator(DeviceAccessList):
         # Construct structure to avoid duplicate reading
         # The shared part is the source Ophyd signal
         if d.RB._r_sig not in self._r_signal_list:
-            self._r_signal_list[d.RB._r_sig] = {"source":d.RB,"indices":[[d._cfg.index,len(self)]]}
+            self._r_signal_list[d.RB._r_sig] = {"source": d.RB, "indices": [[d._cfg.index, len(self)]]}
         else:
-            self._r_signal_list[d.RB._r_sig]["indices"].append([d._cfg.index,len(self)])
+            self._r_signal_list[d.RB._r_sig]["indices"].append([d._cfg.index, len(self)])
 
         if self._writable:
             if d.SP._w_sig not in self._w_signal_list:
-                self._w_signal_list[d.SP._w_sig] = {"source":d.SP,"indices":[[d._cfg.index,len(self)]]}
+                self._w_signal_list[d.SP._w_sig] = {"source": d.SP, "indices": [[d._cfg.index, len(self)]]}
             else:
-                self._w_signal_list[d.SP._w_sig]["indices"].append([d._cfg.index,len(self)])
+                self._w_signal_list[d.SP._w_sig]["indices"].append([d._cfg.index, len(self)])
 
         self.append(d)
 
@@ -78,21 +78,21 @@ class OAScalarAggregator(DeviceAccessList):
     def set_and_wait(self, value: npt.NDArray[np.float64]):
         raise NotImplementedError("Not implemented yet.")
 
-    def _read(self,signal_list:dict) -> npt.NDArray[np.float64]:
+    def _read(self, signal_list: dict) -> npt.NDArray[np.float64]:
 
-        requests = [] # list of status to await
-        for _d,dc in signal_list.items():
-            requests.append( dc["source"].async_get() )
+        requests = []  # list of status to await
+        for _d, dc in signal_list.items():
+            requests.append(dc["source"].async_get())
         values = arun(asyncio.gather(*requests))
         rvalues = np.zeros(len(self))
         sIdx = 0
-        for _,dc in signal_list.items():
+        for _, dc in signal_list.items():
             for i in dc["indices"]:
                 if i[0] is None:
-                    rvalues[i[1]] = values[sIdx] # non indexed scalar value
+                    rvalues[i[1]] = values[sIdx]  # non indexed scalar value
                 else:
                     rvalues[i[1]] = values[sIdx][i[0]]
-            sIdx+=1
+            sIdx += 1
 
         return rvalues
 

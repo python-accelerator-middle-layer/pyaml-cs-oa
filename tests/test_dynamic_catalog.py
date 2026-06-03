@@ -108,4 +108,3 @@ def test_tango_catalog_rejects_invalid_index() -> None:
 
     with pytest.raises(PyAMLException, match="Invalid index"):
         catalog.resolve("sys/tg_test/1/spectrum@bad[m]")
-

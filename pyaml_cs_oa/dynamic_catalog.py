@@ -1,11 +1,13 @@
+from typing import Tuple
+
 from pyaml.common.exception import PyAMLException
 from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import ConfigDict,BaseModel
-from typing import Tuple
+from pydantic import BaseModel, ConfigDict
 
 from .catalog import Catalog
 
 PYAMLCLASS = "DynamicCatalog"
+
 
 class ConfigModel(BaseModel):
     """
@@ -32,21 +34,20 @@ class ConfigModel(BaseModel):
     -------
     .. code-block:: yaml
         backend: "Tango" or "Epics"
-        timeout_ms: 3000        
+        timeout_ms: 3000
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
     timeout_ms: int = 3000
     backend: str = ""
 
-class DynamicCatalog(Catalog):
 
+class DynamicCatalog(Catalog):
     def __init__(self, cfg: ConfigModel):
         self._cfg = cfg
-        self._dp = {} # Device proxy cache (Tango Only)
+        self._dp = {}  # Device proxy cache (Tango Only)
         if cfg.backend.lower() != "tango" and cfg.backend.lower() != "epics":
             raise PyAMLException(f"backend must be `epics` or `tango` but got '{cfg.backend}'") from None
-
 
     def resolve(self, key: str) -> BaseModel:
         if self._cfg.backend.lower() == "epics":
@@ -57,25 +58,25 @@ class DynamicCatalog(Catalog):
             return None
 
 
-def _extract_unit(token: str) -> Tuple[str,str]:
+def _extract_unit(token: str) -> Tuple[str, str]:
 
     # Extract unit block
     try:
-        start_idx = token.index('[') + 1
-        end_idx = token.index(']', start_idx)
-        return (token[start_idx:end_idx],token[:start_idx-1])
+        start_idx = token.index("[") + 1
+        end_idx = token.index("]", start_idx)
+        return (token[start_idx:end_idx], token[: start_idx - 1])
     except ValueError:
-        return "",token # No unit
+        return "", token  # No unit
 
 
 # ── PV spec parser ────────────────────────────────────────────────────────────
-    
+
 
 def _parse_pv(token: str) -> tuple[list[str], int | None, str]:
 
     token = token.strip()
 
-    unit,token = _extract_unit(token)
+    unit, token = _extract_unit(token)
 
     # No suffix means scalar access to the full PV value.
     index = None
@@ -108,13 +109,15 @@ def _build_epics_config(pv_str: str, timeout_ms: int) -> DeviceAccess:
         return EpicsRWConfig(read_pvname=pv_names[0], write_pvname=pv_names[1], timeout_ms=timeout_ms, index=index, unit=unit)
     raise PyAMLException(f"Too many comma-separated tokens in key '{pv_str}' (max 2)")
 
+
 # ── Tango spec parser ────────────────────────────────────────────────────────────
+
 
 def _parse_attribute(token: str) -> tuple[list[str], int | None, str]:
 
     token = token.strip()
 
-    unit,token = _extract_unit(token)
+    unit, token = _extract_unit(token)
 
     # No suffix means scalar access to the full PV value.
     index = None
@@ -128,8 +131,10 @@ def _parse_attribute(token: str) -> tuple[list[str], int | None, str]:
 
     return token, index, unit
 
+
 def _build_tango_config(att_name: str, timeout_ms: int) -> BaseModel:
 
     from .tangoAtt import ConfigModel as TangoAtt
+
     att_name, index, unit = _parse_attribute(att_name)
     return TangoAtt(attribute=att_name, timeout_ms=timeout_ms, index=index, unit=unit)
