@@ -10,14 +10,14 @@ from .types import (
 )
 
 
-def get_SP_RB(cfg: ControlSysConfig, is_array: bool) -> tuple[Setpoint | None, Readback | None]:
+def get_SP_RB(cfg: ControlSysConfig) -> tuple[Setpoint | None, Readback | None]:
     setpoint: Setpoint | None = None
     readback: Readback | None = None
 
     assert isinstance(cfg, TangoConfigAtt)
 
     rw_sig = tango_signal_rw(
-        datatype=float if not is_array else Array1D[numpy.float64],
+        datatype=None,
         read_trl=cfg.attribute,
         write_trl=cfg.attribute,
         timeout=cfg.timeout_ms,

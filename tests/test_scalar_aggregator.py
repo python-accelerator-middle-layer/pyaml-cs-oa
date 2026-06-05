@@ -12,7 +12,7 @@ class FakeScalarSignal(FloatSignalContainer):
     """FloatSignalContainer test double with fake SP/RB sides."""
 
     def __init__(self, value: float, writable: bool = True) -> None:
-        super().__init__(EpicsConfigR(read_pvname="PV:RB"), is_array=False)
+        super().__init__(EpicsConfigR(read_pvname="PV:RB"))
         self._writable = writable
         self.SP = _FakeSide(value, signal_key=object())
         self.RB = _FakeSide(value, signal_key=object())

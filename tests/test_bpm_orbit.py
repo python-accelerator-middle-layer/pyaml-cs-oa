@@ -74,7 +74,7 @@ class IndexedVectorSignal(FloatSignalContainer):
     """FloatSignalContainer fake resolving one indexed value from a shared vector."""
 
     def __init__(self, config: IndexedVectorSignalConfig) -> None:
-        super().__init__(config, is_array=True)
+        super().__init__(config)
         self._readable = True
         self._writable = False
         self.RB = _VectorReadSide(config.source)
