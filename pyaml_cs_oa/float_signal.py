@@ -9,8 +9,8 @@ class FloatSignalContainer(OASignal):
     Class that implements a PyAML Float/FloatArray Signal using ophyd_async Signals.
     """
 
-    def __init__(self, cfg: ControlSysConfig, is_array: bool):
-        super().__init__(cfg, is_array)
+    def __init__(self, cfg: ControlSysConfig):
+        super().__init__(cfg)
 
     def _indexed_float(self, value) -> float:
         if self._cfg.index is None:

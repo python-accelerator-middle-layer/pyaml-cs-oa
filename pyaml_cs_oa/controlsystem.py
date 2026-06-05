@@ -73,11 +73,11 @@ class OphydAsyncControlSystem(ControlSystem):
 
     def attach(self, devs: list[OASignal | None]) -> list[OASignal | None]:
         # Deprecated function
-        return self._attach([d._cfg if d is not None else None for d in devs], False)
+        return self._attach([d._cfg if d is not None else None for d in devs])
 
     def attach_array(self, devs: list[OASignal | None]) -> list[OASignal | None]:
         # Deprecated function
-        return self._attach([d._cfg if d is not None else None for d in devs], True)
+        return self._attach([d._cfg if d is not None else None for d in devs])
 
     def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         if ref is None:
@@ -93,17 +93,17 @@ class OphydAsyncControlSystem(ControlSystem):
                 raise PyAMLException(f"Control system '{self.name()}' catalog cannot resolve key '{ref}'") from exc
 
         if isinstance(ref, EpicsConfigR):
-            return self._attach([ref], ref.index is not None)[0]
+            return self._attach([ref])[0]
         if isinstance(ref, EpicsConfigW):
-            return self._attach([ref], ref.index is not None)[0]
+            return self._attach([ref])[0]
         if isinstance(ref, EpicsConfigRW):
-            return self._attach([ref], ref.index is not None)[0]
+            return self._attach([ref])[0]
         if isinstance(ref, TangoConfigAtt):
-            return self._attach([ref], ref.index is not None)[0]
+            return self._attach([ref])[0]
 
         raise PyAMLException(f"Control system '{self.name()}' cannot build a device from {type(ref).__name__}")
 
-    def _attach(self, configs: list[ControlSysConfig | None], is_array: bool) -> list[OASignal | None]:
+    def _attach(self, configs: list[ControlSysConfig | None]) -> list[OASignal | None]:
         # Concatenate the prefix
         newDevs = []
         for sig_cfg in configs:
@@ -135,7 +135,7 @@ class OphydAsyncControlSystem(ControlSystem):
 
                 if key not in self._devices:
                     n_conf = dict(sig_cfg) | config
-                    nr = sig_cls(sig_cfg_cls(**n_conf), is_array)
+                    nr = sig_cls(sig_cfg_cls(**n_conf))
                     nr.build()
                     self._devices[key] = nr
 

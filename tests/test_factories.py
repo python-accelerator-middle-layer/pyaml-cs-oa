@@ -30,7 +30,7 @@ def test_epics_read_only_factory_builds_readback(
     spy = SignalFactorySpy("epics-r")
     monkeypatch.setattr(epics, "epics_signal_r", spy)
 
-    setpoint, readback = epics.get_SP_RB(EpicsConfigR(read_pvname="PV:RB"), False)
+    setpoint, readback = epics.get_SP_RB(EpicsConfigR(read_pvname="PV:RB"))
 
     assert setpoint is None
     assert isinstance(readback, OAReadback)
@@ -45,7 +45,7 @@ def test_epics_write_only_factory_builds_setpoint(
     spy = SignalFactorySpy("epics-w")
     monkeypatch.setattr(epics, "epics_signal_w", spy)
 
-    setpoint, readback = epics.get_SP_RB(EpicsConfigW(write_pvname="PV:SP"), False)
+    setpoint, readback = epics.get_SP_RB(EpicsConfigW(write_pvname="PV:SP"))
 
     assert isinstance(setpoint, OASetpoint)
     assert readback is None
@@ -59,10 +59,7 @@ def test_epics_read_write_factory_reuses_single_rw_signal(
     spy = SignalFactorySpy("epics-rw")
     monkeypatch.setattr(epics, "epics_signal_rw", spy)
 
-    setpoint, readback = epics.get_SP_RB(
-        EpicsConfigRW(read_pvname="PV:RB", write_pvname="PV:SP"),
-        False,
-    )
+    setpoint, readback = epics.get_SP_RB(EpicsConfigRW(read_pvname="PV:RB", write_pvname="PV:SP"))
 
     assert isinstance(setpoint, OASetpoint)
     assert isinstance(readback, OAReadback)
@@ -77,10 +74,7 @@ def test_tango_read_write_factory_reuses_single_rw_signal(
     spy = SignalFactorySpy("tango-rw")
     monkeypatch.setattr(tango, "tango_signal_rw", spy)
 
-    setpoint, readback = tango.get_SP_RB(
-        TangoConfigAtt(attribute="sys/tg_test/1/value"),
-        False,
-    )
+    setpoint, readback = tango.get_SP_RB(TangoConfigAtt(attribute="sys/tg_test/1/value"))
 
     assert isinstance(setpoint, OASetpoint)
     assert isinstance(readback, OAReadback)

@@ -8,8 +8,8 @@ class ConfigModel(EpicsConfigW): ...
 
 
 class EpicsW(FloatSignalContainer):
-    def __init__(self, cfg: ConfigModel, is_array: bool = False):
-        super().__init__(cfg, is_array)
+    def __init__(self, cfg: ConfigModel):
+        super().__init__(cfg)
 
     def get_cs(self) -> str:
         return "epics"

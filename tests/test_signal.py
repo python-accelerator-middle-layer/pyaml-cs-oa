@@ -20,10 +20,9 @@ def test_epics_signal_build_sets_peer_on_built_sides(
     setpoint = BuiltSide()
     readback = BuiltSide()
 
-    def fake_get_sp_rb(cfg, is_array):
+    def fake_get_sp_rb(cfg):
         assert cfg.read_pvname == "PV:RB"
         assert cfg.write_pvname == "PV:SP"
-        assert is_array is False
         return setpoint, readback
 
     monkeypatch.setattr("pyaml_cs_oa.epics.get_SP_RB", fake_get_sp_rb)
@@ -40,14 +39,13 @@ def test_epics_signal_build_sets_peer_on_built_sides(
 def test_tango_signal_build_uses_tango_factory(monkeypatch: pytest.MonkeyPatch) -> None:
     readback = BuiltSide()
 
-    def fake_get_sp_rb(cfg, is_array):
+    def fake_get_sp_rb(cfg):
         assert cfg.attribute == "sys/tg_test/1/value"
-        assert is_array is True
         return None, readback
 
     monkeypatch.setattr("pyaml_cs_oa.tango.get_SP_RB", fake_get_sp_rb)
 
-    signal = TangoAtt(TangoAttConfig(attribute="sys/tg_test/1/value"), is_array=True)
+    signal = TangoAtt(TangoAttConfig(attribute="sys/tg_test/1/value"))
     signal.build()
 
     assert signal.SP is None
