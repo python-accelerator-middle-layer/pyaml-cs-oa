@@ -20,8 +20,9 @@ class ConfigModel(BaseModel):
 
     For EPCIS::
 
-    - ``READ_PV[unit]``                 → scalar read-only
-    - ``READ_PV@index[unit]``           → array PV with element index, read-only
+    - ``READ_PV[unit]``                   → scalar read-only
+    - ``(WRITE_PV)[unit]``                → scalar write-only
+    - ``READ_PV@index[unit]``             → array PV with element index, read-only
     - ``(READ_PV, WRITE_PV)[unit]``       → scalar read-write
     - ``(READ_PV, WRITE_PV)@index[unit]`` → array PV with element index read-write
 
@@ -59,7 +60,6 @@ class DynamicCatalog(Catalog):
 
 
 def _extract_unit(token: str) -> Tuple[str, str]:
-
     # Extract unit block
     try:
         start_idx = token.index("[") + 1
@@ -72,8 +72,7 @@ def _extract_unit(token: str) -> Tuple[str, str]:
 # ── PV spec parser ────────────────────────────────────────────────────────────
 
 
-def _parse_pv(token: str) -> tuple[list[str], int | None, str]:
-
+def _parse_pv(token: str) -> tuple[list[str], int | None, str, bool]:
     token = token.strip()
 
     unit, token = _extract_unit(token)
@@ -90,21 +89,27 @@ def _parse_pv(token: str) -> tuple[list[str], int | None, str]:
 
     # Parenthesized keys describe one read PV and one write PV.
     if token.startswith("(") and token.endswith(")"):
+        hasw = True
         names = token[1:-1]
         name_list = [name.strip() for name in names.split(",")]
     else:
+        hasw = False
         name_list = [token.strip()]
 
-    return name_list, index, unit
+    return name_list, index, unit, hasw
 
 
 def _build_epics_config(pv_str: str, timeout_ms: int) -> DeviceAccess:
     from .epicsR import ConfigModel as EpicsRConfig
     from .epicsRW import ConfigModel as EpicsRWConfig
+    from .epicsW import ConfigModel as EpicsWConfig
 
-    pv_names, index, unit = _parse_pv(pv_str)
+    pv_names, index, unit, hasw = _parse_pv(pv_str)
     if len(pv_names) == 1:
-        return EpicsRConfig(read_pvname=pv_names[0], timeout_ms=timeout_ms, index=index, unit=unit)
+        if hasw:
+            return EpicsWConfig(write_pvname=pv_names[0], timeout_ms=timeout_ms, index=index, unit=unit)
+        else:
+            return EpicsRConfig(read_pvname=pv_names[0], timeout_ms=timeout_ms, index=index, unit=unit)
     if len(pv_names) == 2:
         return EpicsRWConfig(read_pvname=pv_names[0], write_pvname=pv_names[1], timeout_ms=timeout_ms, index=index, unit=unit)
     raise PyAMLException(f"Too many comma-separated tokens in key '{pv_str}' (max 2)")
@@ -114,7 +119,6 @@ def _build_epics_config(pv_str: str, timeout_ms: int) -> DeviceAccess:
 
 
 def _parse_attribute(token: str) -> tuple[list[str], int | None, str]:
-
     token = token.strip()
 
     unit, token = _extract_unit(token)
@@ -133,7 +137,6 @@ def _parse_attribute(token: str) -> tuple[list[str], int | None, str]:
 
 
 def _build_tango_config(att_name: str, timeout_ms: int) -> BaseModel:
-
     from .tangoAtt import ConfigModel as TangoAtt
 
     att_name, index, unit = _parse_attribute(att_name)
