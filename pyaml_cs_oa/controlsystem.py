@@ -3,9 +3,11 @@ import logging
 from pyaml.common.exception import PyAMLException
 from pyaml.control.controlsystem import ControlSystem
 from pyaml.control.deviceaccess import DeviceAccess
+from pyaml.control.deviceaccesslist import DeviceAccessList
 from pydantic import BaseModel, ConfigDict
 
 from . import __version__
+from .aggregator import OAAggregator
 from .catalog import Catalog
 from .epicsR import EpicsR
 from .epicsRW import EpicsRW
@@ -35,12 +37,6 @@ class ConfigModel(BaseModel):
         If None specified a dynamic catalog is used.
     debug_level : str
         Debug verbosity level.
-    scalar_aggregator : str
-        Aggregator module for scalar values. If none specified, writings and
-        readings of sclar value are serialized.
-    vector_aggregator : str
-        Aggregator module for vecrors. If none specified, writings and readings
-        of vector are serialized,
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
@@ -49,8 +45,6 @@ class ConfigModel(BaseModel):
     prefix: str = ""
     catalog: Catalog | None = None
     debug_level: str | None = None
-    scalar_aggregator: str | None = "pyaml_cs_oa.scalar_aggregator"
-    vector_aggregator: str | None = None
 
 
 class OphydAsyncControlSystem(ControlSystem):
@@ -155,27 +149,9 @@ class OphydAsyncControlSystem(ControlSystem):
         """
         return self._cfg.name
 
-    def scalar_aggregator(self) -> str | None:
-        """
-        Returns the module name used for handling aggregator of DeviceAccess
-
-        Returns
-        -------
-        str
-            Aggregator module name
-        """
-        return self._cfg.scalar_aggregator
-
-    def vector_aggregator(self) -> str | None:
-        """
-        Returns the module name used for handling aggregator of DeviceVectorAccess
-
-        Returns
-        -------
-        str
-            Aggregator module name
-        """
-        return self._cfg.vector_aggregator
+    def get_aggregator(self) -> DeviceAccessList | None:
+        """Returns a new empty DeviceAccessList. If None is returned serialized readings/writtings are performed"""
+        return OAAggregator()
 
     def __repr__(self):
         return repr(self._cfg).replace("ConfigModel", self.__class__.__name__)

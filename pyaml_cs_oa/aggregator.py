@@ -10,22 +10,15 @@ from pydantic import BaseModel
 from . import arun
 from .float_signal import FloatSignalContainer
 
-PYAMLCLASS: str = "OAScalarAggregator"
 
-
-class ConfigModel(BaseModel):
-    pass
-
-
-class OAScalarAggregator(DeviceAccessList):
-    def __init__(self, cfg: ConfigModel = None):
+class OAAggregator(DeviceAccessList):
+    def __init__(self):
         super().__init__()
         self._r_signal_list = {}  # List of signal to read
         self._w_signal_list = {}  # List of signal to read/write
         self._writable = None
 
     def _add_to_dev_list(self, d: FloatSignalContainer):
-
         # Check type and read/write
         if not isinstance(d, FloatSignalContainer):
             raise PyAMLException("All devices must be instances of FloatSignalContainer.")
@@ -65,7 +58,6 @@ class OAScalarAggregator(DeviceAccessList):
             return self
 
     def set(self, value: npt.NDArray[np.float64]):
-
         if len(value) != len(self):
             raise PyAMLException(f"Size of value ({len(value)} do not match the number of managed devices ({len(self)})")
 
@@ -79,7 +71,6 @@ class OAScalarAggregator(DeviceAccessList):
         raise NotImplementedError("Not implemented yet.")
 
     def _read(self, signal_list: dict) -> npt.NDArray[np.float64]:
-
         requests = []  # list of status to await
         for _d, dc in signal_list.items():
             requests.append(dc["source"].async_get())
@@ -97,14 +88,12 @@ class OAScalarAggregator(DeviceAccessList):
         return rvalues
 
     def get(self) -> npt.NDArray[np.float64]:
-
         if self._writable:
             return self._read(self._w_signal_list)
         else:
             return self._read(self._r_signal_list)
 
     def readback(self) -> np.array:
-
         return self._read(self._r_signal_list)
 
     def get_range(self) -> list[float]:
