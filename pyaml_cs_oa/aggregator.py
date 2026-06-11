@@ -102,6 +102,9 @@ class OAAggregator(DeviceAccessList):
             attr_range.extend(device.get_range())
         return attr_range
 
+    def unit(self) -> list[str]:
+        return [a.unit() for a in self]
+
     def check_device_availability(self) -> bool:
         available = False
         for device in self:
