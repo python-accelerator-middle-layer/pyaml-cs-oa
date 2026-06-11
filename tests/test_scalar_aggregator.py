@@ -3,8 +3,8 @@ import pytest
 from pyaml import PyAMLException
 from pyaml.control.deviceaccess import DeviceAccess
 
+from pyaml_cs_oa.aggregator import OAAggregator
 from pyaml_cs_oa.float_signal import FloatSignalContainer
-from pyaml_cs_oa.scalar_aggregator import OAScalarAggregator
 from pyaml_cs_oa.types import EpicsConfigR
 
 
@@ -67,21 +67,21 @@ class WrongDevice(DeviceAccess):
 
 
 def test_add_devices_rejects_single_wrong_device() -> None:
-    aggregator = OAScalarAggregator()
+    aggregator = OAAggregator()
 
     with pytest.raises(PyAMLException, match="All devices must be instances"):
         aggregator.add_devices(WrongDevice())
 
 
 def test_add_devices_rejects_wrong_device_in_list() -> None:
-    aggregator = OAScalarAggregator()
+    aggregator = OAAggregator()
 
     with pytest.raises(PyAMLException, match="All devices must be instances"):
         aggregator.add_devices([FakeScalarSignal(1.0), WrongDevice()])
 
 
 def test_get_returns_values_in_device_order() -> None:
-    aggregator = OAScalarAggregator()
+    aggregator = OAAggregator()
     aggregator.add_devices([FakeScalarSignal(1.0), FakeScalarSignal(2.0)])
 
     np.testing.assert_array_equal(aggregator.get(), np.array([1.0, 2.0]))
@@ -90,7 +90,7 @@ def test_get_returns_values_in_device_order() -> None:
 def test_set_writes_values_in_device_order() -> None:
     first = FakeScalarSignal(1.0)
     second = FakeScalarSignal(2.0)
-    aggregator = OAScalarAggregator()
+    aggregator = OAAggregator()
     aggregator.add_devices([first, second])
 
     aggregator.set(np.array([10.0, 20.0]))
@@ -100,7 +100,7 @@ def test_set_writes_values_in_device_order() -> None:
 
 
 def test_set_rejects_length_mismatch() -> None:
-    aggregator = OAScalarAggregator()
+    aggregator = OAAggregator()
     aggregator.add_devices([FakeScalarSignal(1.0), FakeScalarSignal(2.0)])
 
     with pytest.raises(PyAMLException, match="do not match"):
@@ -108,7 +108,7 @@ def test_set_rejects_length_mismatch() -> None:
 
 
 def test_readback_returns_readback_values_in_device_order() -> None:
-    aggregator = OAScalarAggregator()
+    aggregator = OAAggregator()
     aggregator.add_devices([FakeScalarSignal(3.0), FakeScalarSignal(4.0)])
 
     np.testing.assert_array_equal(aggregator.readback(), np.array([3.0, 4.0]))
