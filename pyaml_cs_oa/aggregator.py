@@ -5,7 +5,6 @@ from numpy import typing as npt
 from pyaml import PyAMLException
 from pyaml.control.deviceaccess import DeviceAccess
 from pyaml.control.deviceaccesslist import DeviceAccessList
-from pydantic import BaseModel
 
 from . import arun
 from .float_signal import FloatSignalContainer
@@ -17,6 +16,7 @@ class OAAggregator(DeviceAccessList):
         self._r_signal_list = {}  # List of signal to read
         self._w_signal_list = {}  # List of signal to read/write
         self._writable = None
+        self._items: list[FloatSignalContainer] = []
 
     def _add_to_dev_list(self, d: FloatSignalContainer):
         # Check type and read/write
@@ -32,17 +32,17 @@ class OAAggregator(DeviceAccessList):
         # Construct structure to avoid duplicate reading
         # The shared part is the source Ophyd signal
         if d.RB._r_sig not in self._r_signal_list:
-            self._r_signal_list[d.RB._r_sig] = {"source": d.RB, "indices": [[d._cfg.index, len(self)]]}
+            self._r_signal_list[d.RB._r_sig] = {"source": d.RB, "indices": [[d._cfg.index, len(self._items)]]}
         else:
-            self._r_signal_list[d.RB._r_sig]["indices"].append([d._cfg.index, len(self)])
+            self._r_signal_list[d.RB._r_sig]["indices"].append([d._cfg.index, len(self._items)])
 
         if self._writable:
             if d.SP._w_sig not in self._w_signal_list:
-                self._w_signal_list[d.SP._w_sig] = {"source": d.SP, "indices": [[d._cfg.index, len(self)]]}
+                self._w_signal_list[d.SP._w_sig] = {"source": d.SP, "indices": [[d._cfg.index, len(self._items)]]}
             else:
-                self._w_signal_list[d.SP._w_sig]["indices"].append([d._cfg.index, len(self)])
+                self._w_signal_list[d.SP._w_sig]["indices"].append([d._cfg.index, len(self._items)])
 
-        self.append(d)
+        self._items.append(d)
 
     def add_devices(self, devices: DeviceAccess | list[DeviceAccess]):
         if isinstance(devices, list):
@@ -51,19 +51,21 @@ class OAAggregator(DeviceAccessList):
         else:
             self._add_to_dev_list(devices)
 
-    def get_devices(self) -> DeviceAccess | list[DeviceAccess]:
-        if len(self) == 1:
-            return self[0]
-        else:
-            return self
+    def len(self) -> int:
+        return len(self._items)
+
+    def get_device_at(self, index: int) -> DeviceAccess:
+        return self._items[index]
 
     def set(self, value: npt.NDArray[np.float64]):
-        if len(value) != len(self):
-            raise PyAMLException(f"Size of value ({len(value)} do not match the number of managed devices ({len(self)})")
+        if len(value) != len(self._items):
+            raise PyAMLException(
+                f"Size of value ({len(value)} do not match the number of managed devices ({len(self._items)})"
+            )
 
         d: FloatSignalContainer
         requests = []  # list of status to await
-        for idx, d in enumerate(self):
+        for idx, d in enumerate(self._items):
             requests.append(d.SP._complete_set(value[idx]))
         arun(asyncio.gather(*requests))
 
@@ -75,7 +77,7 @@ class OAAggregator(DeviceAccessList):
         for _d, dc in signal_list.items():
             requests.append(dc["source"].async_get())
         values = arun(asyncio.gather(*requests))
-        rvalues = np.zeros(len(self))
+        rvalues = np.zeros(len(self._items))
         sIdx = 0
         for _, dc in signal_list.items():
             for i in dc["indices"]:
@@ -98,16 +100,16 @@ class OAAggregator(DeviceAccessList):
 
     def get_range(self) -> list[float]:
         attr_range: list[float] = []
-        for device in self:
+        for device in self._items:
             attr_range.extend(device.get_range())
         return attr_range
 
     def unit(self) -> list[str]:
-        return [a.unit() for a in self]
+        return [a.unit() for a in self._items]
 
     def check_device_availability(self) -> bool:
         available = False
-        for device in self:
+        for device in self._items:
             available = device.check_device_availability()
             if not available:
                 break
@@ -115,7 +117,7 @@ class OAAggregator(DeviceAccessList):
 
     def __repr__(self):
         ret_str = "OAScalarAggregator(\n"
-        for d in self:
+        for d in self._items:
             ret_str += repr(d)
             ret_str += "\n"
         ret_str += ")"
