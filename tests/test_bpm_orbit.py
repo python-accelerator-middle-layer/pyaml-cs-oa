@@ -97,7 +97,7 @@ class IdentityAttachControlSystem(OphydAsyncControlSystem):
 
     # attach public methods are depecrated
 
-    def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
+    def get_device_access(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         config = self._cfg.catalog.resolve(ref)
         return IndexedVectorSignal(config)
 
@@ -112,7 +112,7 @@ def _attached_indexed_bpm(
             y_pos=f"BPM{bpm_index}:Y",
         ),
     )
-    x_pos, y_pos = control_system.get_devices(model.get_pos_devices())
+    x_pos, y_pos = control_system.get_device_access(model.get_pos_devices())
     bpm = BPM(BPMConfig(name=f"BPM{bpm_index}", model=model))
 
     return bpm.attach(
