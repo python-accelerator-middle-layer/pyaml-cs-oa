@@ -73,7 +73,7 @@ class OphydAsyncControlSystem(ControlSystem):
         # Deprecated function
         return self._attach([d._cfg if d is not None else None for d in devs])
 
-    def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
+    def get_device_access(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         if ref is None:
             return None
 
