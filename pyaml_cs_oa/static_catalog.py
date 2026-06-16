@@ -22,7 +22,7 @@ class ConfigModel(BaseModel):
 
 class StaticCatalog(Catalog):
     def __init__(self, cfg: ConfigModel):
-        super().__init__(cfg)
+        self._cfg = cfg
         if not cfg.entries:
             raise PyAMLException("StaticCatalog.entries must contain at least one entry")
         self._refs: dict[str, DeviceAccess] = {}
@@ -36,4 +36,4 @@ class StaticCatalog(Catalog):
         try:
             return self._refs[key]._cfg
         except KeyError as exc:
-            raise PyAMLException(f"Catalog '{self.get_name()}' cannot resolve key '{key}'") from exc
+            raise PyAMLException(f"StaticCatalog cannot resolve key '{key}'") from exc

@@ -10,9 +10,12 @@ from pyaml.control.abstract_impl import RBpmArray
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel, ConfigDict
 
-from pyaml_cs_oa.catalog import Catalog
 from pyaml_cs_oa.controlsystem import ConfigModel, OphydAsyncControlSystem
 from pyaml_cs_oa.float_signal import FloatSignalContainer
+from pyaml_cs_oa.static_catalog import ConfigModel as StaticCatalogConfig
+from pyaml_cs_oa.static_catalog import StaticCatalog
+from pyaml_cs_oa.static_catalog_entry import ConfigModel as StaticCatalogEntryConfig
+from pyaml_cs_oa.static_catalog_entry import StaticCatalogEntry
 from pyaml_cs_oa.types import EpicsConfigR
 
 
@@ -84,20 +87,12 @@ class IndexedVectorSignal(FloatSignalContainer):
         return f"{self._cfg.read_pvname}[{self._cfg.index}]"
 
 
-class StaticCatalog(Catalog):
-    def __init__(self, devices: dict[str, DeviceAccess]) -> None:
-        self._devices = devices
-
-    def resolve(self, key: str) -> BaseModel:
-        return self._devices[key]
-
-
 class IdentityAttachControlSystem(OphydAsyncControlSystem):
     """Control system fake that keeps pre-built DeviceAccess objects attached."""
 
     # attach public methods are depecrated
 
-    def get_device(self, ref: str | BaseModel | None) -> DeviceAccess | None:
+    def get_device_access(self, ref: str | BaseModel | None) -> DeviceAccess | None:
         config = self._cfg.catalog.resolve(ref)
         return IndexedVectorSignal(config)
 
@@ -112,7 +107,7 @@ def _attached_indexed_bpm(
             y_pos=f"BPM{bpm_index}:Y",
         ),
     )
-    x_pos, y_pos = control_system.get_devices(model.get_pos_devices())
+    x_pos, y_pos = control_system.get_devices_access(model.get_pos_devices())
     bpm = BPM(BPMConfig(name=f"BPM{bpm_index}", model=model))
 
     return bpm.attach(
@@ -124,20 +119,28 @@ def _attached_indexed_bpm(
 
 
 def _control_system_with_indexed_orbit(orbit_device: VectorDevice, bpm_count: int) -> IdentityAttachControlSystem:
-    catalog = StaticCatalog(
-        {
-            f"BPM{bpm_index}:X": IndexedVectorSignalConfig(
-                source=orbit_device, read_pvname=orbit_device.name(), unit=orbit_device.unit(), index=2 * bpm_index
-            )
-            for bpm_index in range(bpm_count)
-        }
-        | {
-            f"BPM{bpm_index}:Y": IndexedVectorSignalConfig(
-                source=orbit_device, read_pvname=orbit_device.name(), unit=orbit_device.unit(), index=2 * bpm_index + 1
-            )
-            for bpm_index in range(bpm_count)
-        },
-    )
+    entries = []
+    for bpm_index in range(bpm_count):
+        x_config = IndexedVectorSignalConfig(
+            source=orbit_device,
+            read_pvname=orbit_device.name(),
+            unit=orbit_device.unit(),
+            index=2 * bpm_index,
+        )
+        y_config = IndexedVectorSignalConfig(
+            source=orbit_device,
+            read_pvname=orbit_device.name(),
+            unit=orbit_device.unit(),
+            index=2 * bpm_index + 1,
+        )
+        entries.extend(
+            [
+                StaticCatalogEntry(StaticCatalogEntryConfig(key=f"BPM{bpm_index}:X", device=IndexedVectorSignal(x_config))),
+                StaticCatalogEntry(StaticCatalogEntryConfig(key=f"BPM{bpm_index}:Y", device=IndexedVectorSignal(y_config))),
+            ],
+        )
+
+    catalog = StaticCatalog(StaticCatalogConfig(entries=entries))
     control_system = IdentityAttachControlSystem(ConfigModel(name="live", catalog=catalog))
     return control_system
 
