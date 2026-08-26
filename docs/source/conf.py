@@ -42,3 +42,19 @@ exclude_patterns = []
 html_theme = 'pydata_sphinx_theme'
 html_static_path = ['_static']
 html_title = "pyaml-cs-oa"
+
+html_css_files = [
+    "custom.css",
+]
+
+html_theme_options = {
+    "navigation_depth": 4,
+    "show_nav_level": 2,
+}
+
+html_sidebars = {
+    "**": [
+        "sidebar-collapse",
+        "sidebar-nav-bs",
+    ],
+}

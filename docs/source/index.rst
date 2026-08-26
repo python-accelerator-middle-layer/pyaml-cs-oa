@@ -1,10 +1,12 @@
 
-Welcome to pyaml-cs-oa's documentation!
+Documentation for pyaml-cs-oa
 ================================================================================
 
+.. toctree::
+   :hidden:
 
-.. autosummary::
-   :toctree: api
-   :recursive:
+   api
 
-   pyaml_cs_oa
+.. container:: api-root   
+
+   .. include:: api/pyaml_cs_oa.rst
