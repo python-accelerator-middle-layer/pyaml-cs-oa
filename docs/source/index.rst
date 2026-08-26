@@ -1,11 +1,10 @@
 
-Welcome to pyAML control system plugin for ophyd-async's documentation!
-================================================
+Welcome to pyaml-cs-oa's documentation!
+================================================================================
 
-...
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+.. autosummary::
+   :toctree: api
+   :recursive:
 
-   api
+   pyaml_cs_oa

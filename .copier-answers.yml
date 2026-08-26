@@ -1,5 +1,7 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: 1d4e353
+_commit: c58d309
 _src_path: https://github.com/python-accelerator-middle-layer/pyaml-repository-template.git
-display_name: pyAML control system plugin for ophyd-async
-package_name: pyaml_cs_oa
+distribution_name: pyaml-cs-oa
+html_title: pyaml-cs-oa
+import_name: pyaml_cs_oa
+package_name: pyaml-cs-oa

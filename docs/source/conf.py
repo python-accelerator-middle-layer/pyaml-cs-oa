@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "pyAML control system plugin for ophyd-async"
+project = "pyaml-cs-oa"
 copyright = '2026, pyAML Collaboration'
 author = 'pyAML Collaboration'
 
@@ -39,5 +39,6 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+html_theme = 'pydata_sphinx_theme'
 html_static_path = ['_static']
+html_title = "pyaml-cs-oa"
