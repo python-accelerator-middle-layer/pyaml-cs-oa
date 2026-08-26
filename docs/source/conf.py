@@ -3,16 +3,6 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
-# This is neeed for autosummary to find the path to the source code
-# It is based on using a flat package layout
-# https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/
-
-from pathlib import Path
-import sys
-
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
