@@ -39,6 +39,14 @@ html_logo = "_static/_images/logo.png"
 html_theme_options = {
     "navigation_depth": 4,
     "show_nav_level": 2,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/python-accelerator-middle-layer/pyaml-cs-oa",
+            "icon": "fa-brands fa-github",
+            "type": "fontawesome",
+        },
+    ],
 }
 
 html_sidebars = {
