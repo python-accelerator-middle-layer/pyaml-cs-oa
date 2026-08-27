@@ -11,4 +11,4 @@ API Reference
 
 .. container:: api-root
 
-   .. include:: api/pyaml_cs_oa.rst  
+   .. include:: api/pyaml_cs_oa.rst

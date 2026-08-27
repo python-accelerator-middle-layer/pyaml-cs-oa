@@ -41,7 +41,6 @@ def get_names(d) -> str:
 
 
 def convert(d, path: str):
-
     if isinstance(d, list):
         # list can be a list of objects or a list of native types
         l = []

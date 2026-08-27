@@ -11,7 +11,6 @@ _nest_asyncio_applied = False
 
 
 def loop() -> asyncio.AbstractEventLoop:
-
     global _loop, _nest_asyncio_applied
 
     # Try to get the currently running loop (e.g., in Jupyter)
@@ -73,7 +72,6 @@ def _reap_done_tasks(evloop: asyncio.AbstractEventLoop) -> None:
 
 
 def arun(coro: Awaitable[Any]) -> Any:
-
     evloop = loop()
 
     try:

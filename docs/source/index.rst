@@ -12,7 +12,7 @@ Documentation for pyaml-cs-oa
    See the `main pyAML documentation
    <https://python-accelerator-middle-layer.github.io/documentation/>`__
    for tutorials, how-to guides, and an overview of the ecosystem.
-   
+
 .. toctree::
    :hidden:
 
