@@ -1,3 +1,5 @@
+"""PyAML control-system integration built on ophyd-async."""
+
 import logging
 
 from pyaml.common.exception import PyAMLException
@@ -48,7 +50,7 @@ class ConfigModel(BaseModel):
 
 
 class OphydAsyncControlSystem(ControlSystem):
-    """A generic control system using ophyd_async backend."""
+    """Generic PyAML control system using an ophyd-async backend."""
 
     def __init__(self, cfg: ConfigModel):
         super().__init__()
@@ -66,14 +68,17 @@ class OphydAsyncControlSystem(ControlSystem):
         )
 
     def attach(self, devs: list[OASignal | None]) -> list[OASignal | None]:
+        """Attach configured signals; retained for compatibility."""
         # Deprecated function
         return self._attach([d._cfg if d is not None else None for d in devs])
 
     def attach_array(self, devs: list[OASignal | None]) -> list[OASignal | None]:
+        """Attach an array of configured signals; retained for compatibility."""
         # Deprecated function
         return self._attach([d._cfg if d is not None else None for d in devs])
 
     def get_device_access(self, ref: str | BaseModel | None) -> DeviceAccess | None:
+        """Resolve or construct a device-access object from a reference."""
         if ref is None:
             return None
 
@@ -150,7 +155,7 @@ class OphydAsyncControlSystem(ControlSystem):
         return self._cfg.name
 
     def get_aggregator(self) -> DeviceAccessList | None:
-        """Returns a new empty DeviceAccessList. If None is returned serialized readings/writtings are performed"""
+        """Return a new empty aggregator for batched device operations."""
         return OAAggregator()
 
     def __repr__(self):
