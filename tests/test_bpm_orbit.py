@@ -3,9 +3,10 @@ from typing import Any
 import numpy as np
 from pyaml.arrays.bpm_array import BPMArray
 from pyaml.bpm.bpm import BPM
-from pyaml.bpm.bpm import ConfigModel as BPMConfig
-from pyaml.bpm.bpm_simple_model import BPMSimpleModel
-from pyaml.bpm.bpm_simple_model import ConfigModel as BPMSimpleModelConfig
+
+# from pyaml.bpm.bpm import ConfigModel as BPMConfig
+# from pyaml.bpm.bpm_simple_model import BPMSimpleModel
+# from pyaml.bpm.bpm_simple_model import ConfigModel as BPMSimpleModelConfig
 from pyaml.control.abstract_impl import RBpmArray
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel, ConfigDict
@@ -101,14 +102,10 @@ def _attached_indexed_bpm(
     control_system: IdentityAttachControlSystem,
     bpm_index: int,
 ) -> BPM:
-    model = BPMSimpleModel(
-        BPMSimpleModelConfig(
-            x_pos=f"BPM{bpm_index}:X",
-            y_pos=f"BPM{bpm_index}:Y",
-        ),
-    )
-    x_pos, y_pos = control_system.get_devices_access(model.get_pos_devices())
-    bpm = BPM(BPMConfig(name=f"BPM{bpm_index}", model=model))
+    x_pos = f"BPM{bpm_index}:X"
+    y_pos = f"BPM{bpm_index}:Y"
+
+    bpm = BPM(name=f"BPM{bpm_index}", x_pos=x_pos, y_pos=y_pos)
 
     return bpm.attach(
         control_system,
