@@ -1,10 +1,12 @@
 import logging
 
+from pyaml.common.element import __pyaml_repr__
 from pyaml.common.exception import PyAMLException
 from pyaml.control.controlsystem import ControlSystem
 from pyaml.control.deviceaccess import DeviceAccess
 from pyaml.control.deviceaccesslist import DeviceAccessList
-from pydantic import BaseModel, ConfigDict
+from pyaml.validation import DynamicValidation, register_schema
+from pydantic import BaseModel
 
 from . import __version__
 from .aggregator import OAAggregator
@@ -21,9 +23,9 @@ PYAMLCLASS: str = "OphydAsyncControlSystem"
 logger = logging.getLogger(__name__)
 
 
-class ConfigModel(BaseModel):
-    """
-    Configuration model for an OA Control System.
+@register_schema
+class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
+    """A generic control system using ophyd_async backend.
 
     Attributes
     ----------
@@ -35,34 +37,29 @@ class ConfigModel(BaseModel):
     catalog : Catalog | None
         Catalog instance or catalog name used to resolve PyAML device keys.
         If None specified a dynamic catalog is used.
-    debug_level : str
+    debug_level : str | int | None
         Debug verbosity level.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-
-    name: str
-    prefix: str = ""
-    catalog: Catalog | None = None
-    debug_level: str | None = None
-
-
-class OphydAsyncControlSystem(ControlSystem):
-    """A generic control system using ophyd_async backend."""
-
-    def __init__(self, cfg: ConfigModel):
+    def __init__(self, name: str, prefix: str = "", catalog: Catalog | None = None, debug_level: str | int | None = None):
         super().__init__()
-        self._cfg = cfg
+        self._name = name
+        self._prefix = prefix
+        self._catalog = catalog
+        self.debug_level = debug_level
+
         self._devices: dict[str, DeviceAccess] = {}  # Dict containing all attached DeviceAccess
 
-        if self._cfg.debug_level:
-            log_level = getattr(logging, self._cfg.debug_level, logging.WARNING)
+        if self.debug_level:
+            if isinstance(self.debug_level, str):
+                log_level = getattr(logging, self.debug_level.upper(), logging.WARNING)
+            else:
+                log_level = self.debug_level
             logger.setLevel(log_level)
 
         logger.log(
             logging.WARNING,
-            f"PyAML OA control system binding ({__version__}) initialized with name '{self._cfg.name}'"
-            f" and prefix='{self._cfg.prefix}'",
+            f"PyAML OA control system binding ({__version__}) initialized with name '{self.name}' and prefix='{self.prefix}'",
         )
 
     def attach(self, devs: list[OASignal | None]) -> list[OASignal | None]:
@@ -79,10 +76,10 @@ class OphydAsyncControlSystem(ControlSystem):
 
         if isinstance(ref, str):
             # Retrieve a config from a key using using a Catalog
-            if self._cfg.catalog is None:
+            if self._catalog is None:
                 raise PyAMLException(f"Control system '{self.name()}' has no catalog when trying to resolve '{ref}'")
             try:
-                ref = self._cfg.catalog.resolve(ref)
+                ref = self._catalog.resolve(ref)
             except AttributeError as exc:
                 raise PyAMLException(f"Control system '{self.name()}' catalog cannot resolve key '{ref}'") from exc
 
@@ -106,24 +103,24 @@ class OphydAsyncControlSystem(ControlSystem):
                 index_str = "" if sig_cfg.index is None else str(sig_cfg.index)
 
                 if isinstance(sig_cfg, EpicsConfigR):
-                    key = self._cfg.prefix + sig_cfg.read_pvname + index_str
+                    key = self.prefix + sig_cfg.read_pvname + index_str
                     sig_cls = EpicsR
-                    config = dict(read_pvname=self._cfg.prefix + sig_cfg.read_pvname)
+                    config = dict(read_pvname=self.prefix + sig_cfg.read_pvname)
                 elif isinstance(sig_cfg, EpicsConfigW):
-                    key = self._cfg.prefix + sig_cfg.write_pvname + index_str
+                    key = self.prefix + sig_cfg.write_pvname + index_str
                     sig_cls = EpicsW
-                    config = dict(write_pvname=self._cfg.prefix + sig_cfg.write_pvname)
+                    config = dict(write_pvname=self.prefix + sig_cfg.write_pvname)
                 elif isinstance(sig_cfg, EpicsConfigRW):
-                    key = self._cfg.prefix + sig_cfg.read_pvname + sig_cfg.write_pvname + index_str
+                    key = self.prefix + sig_cfg.read_pvname + sig_cfg.write_pvname + index_str
                     sig_cls = EpicsRW
                     config = dict(
-                        read_pvname=self._cfg.prefix + sig_cfg.read_pvname,
-                        write_pvname=self._cfg.prefix + sig_cfg.write_pvname,
+                        read_pvname=self.prefix + sig_cfg.read_pvname,
+                        write_pvname=self.prefix + sig_cfg.write_pvname,
                     )
                 elif isinstance(sig_cfg, TangoConfigAtt):
-                    key = self._cfg.prefix + sig_cfg.attribute + index_str
+                    key = self.prefix + sig_cfg.attribute + index_str
                     sig_cls = TangoAtt
-                    config = dict(attribute=self._cfg.prefix + sig_cfg.attribute)
+                    config = dict(attribute=self.prefix + sig_cfg.attribute)
                 else:
                     raise PyAMLException(f"OphydAsyncControlSystem: Unsupported type {type(sig_cfg)}")
 
@@ -147,11 +144,23 @@ class OphydAsyncControlSystem(ControlSystem):
         str
             Name of the control system.
         """
-        return self._cfg.name
+        return self._name
+
+    @property
+    def prefix(self) -> str:
+        """
+        Return the prefix of the control system.
+
+        Returns
+        -------
+        str
+            Prefix of the control system.
+        """
+        return self._prefix
 
     def get_aggregator(self) -> DeviceAccessList | None:
         """Returns a new empty DeviceAccessList. If None is returned serialized readings/writtings are performed"""
         return OAAggregator()
 
     def __repr__(self):
-        return repr(self._cfg).replace("ConfigModel", self.__class__.__name__)
+        return __pyaml_repr__(self)
