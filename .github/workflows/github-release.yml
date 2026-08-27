@@ -1,0 +1,38 @@
+name: GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  discussions: write
+
+jobs:
+  release:
+    name: Build and create draft release on GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Hatch
+        run: python -m pip install --upgrade hatch
+
+      - name: Build distribution
+        run: hatch build
+
+      - name: Create draft GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          discussion_category_name: Announcements
+          files: dist/*
