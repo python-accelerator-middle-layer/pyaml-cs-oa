@@ -18,7 +18,7 @@ class ConfigModel(BaseModel):
     The key passed to ``resolve()`` is the PV or Tango attribute specification string — no
     ``entries`` list required.  Resolutions are cached after the first call.
 
-    Supported key formats::
+    Supported key formats:
 
     For EPCIS::
 
@@ -36,6 +36,7 @@ class ConfigModel(BaseModel):
     Example
     -------
     .. code-block:: yaml
+
         backend: "Tango" or "Epics"
         timeout_ms: 3000
     """
