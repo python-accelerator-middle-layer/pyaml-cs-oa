@@ -1,3 +1,5 @@
+"""Aggregators for combining multiple ophyd-async float signals."""
+
 import asyncio
 
 import numpy as np
@@ -11,6 +13,8 @@ from .float_signal import FloatSignalContainer
 
 
 class OAAggregator(DeviceAccessList):
+    """Aggregate scalar or indexed signals into one device-access object."""
+
     def __init__(self):
         super().__init__()
         self._r_signal_list = {}  # List of signal to read
@@ -45,6 +49,13 @@ class OAAggregator(DeviceAccessList):
         self._items.append(d)
 
     def add_devices(self, devices: DeviceAccess | list[DeviceAccess]):
+        """Add one device or a list of devices to the aggregator.
+
+        Parameters
+        ----------
+        devices : DeviceAccess or list of DeviceAccess
+            Signals to aggregate. All signals must have compatible access modes.
+        """
         if isinstance(devices, list):
             for d in devices:
                 self._add_to_dev_list(d)
@@ -52,12 +63,15 @@ class OAAggregator(DeviceAccessList):
             self._add_to_dev_list(devices)
 
     def len(self) -> int:
+        """Return the number of managed devices."""
         return len(self._items)
 
     def get_device_at(self, index: int) -> DeviceAccess:
+        """Return the managed device at ``index``."""
         return self._items[index]
 
     def set(self, value: npt.NDArray[np.float64]):
+        """Set all managed devices from a one-dimensional value array."""
         if len(value) != len(self._items):
             raise PyAMLException(
                 f"Size of value ({len(value)} do not match the number of managed devices ({len(self._items)})"
@@ -70,6 +84,13 @@ class OAAggregator(DeviceAccessList):
         arun(asyncio.gather(*requests))
 
     def set_and_wait(self, value: npt.NDArray[np.float64]):
+        """Set all devices and wait for completion.
+
+        Raises
+        ------
+        NotImplementedError
+            This operation is not implemented.
+        """
         raise NotImplementedError("Not implemented yet.")
 
     def _read(self, signal_list: dict) -> npt.NDArray[np.float64]:
@@ -90,24 +111,29 @@ class OAAggregator(DeviceAccessList):
         return rvalues
 
     def get(self) -> npt.NDArray[np.float64]:
+        """Return current setpoint values, or readbacks for read-only devices."""
         if self._writable:
             return self._read(self._w_signal_list)
         else:
             return self._read(self._r_signal_list)
 
     def readback(self) -> np.array:
+        """Return current readback values for all managed devices."""
         return self._read(self._r_signal_list)
 
     def get_range(self) -> list[float]:
+        """Return concatenated ranges for all managed devices."""
         attr_range: list[float] = []
         for device in self._items:
             attr_range.extend(device.get_range())
         return attr_range
 
     def unit(self) -> list[str]:
+        """Return units in managed-device order."""
         return [a.unit() for a in self._items]
 
     def check_device_availability(self) -> bool:
+        """Return whether every managed device is available."""
         available = False
         for device in self._items:
             available = device.check_device_availability()
