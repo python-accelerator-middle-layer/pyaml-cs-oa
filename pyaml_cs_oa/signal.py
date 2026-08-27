@@ -1,3 +1,5 @@
+"""Base signal adapter shared by EPICS and Tango implementations."""
+
 from pyaml.control.deviceaccess import DeviceAccess
 
 from .types import (
@@ -18,6 +20,7 @@ class OASignal(DeviceAccess):
         self._cfg = cfg
 
     def build(self):
+        """Create backend readback and setpoint adapters for this signal."""
         self._readable: bool = isinstance(self._cfg, (EpicsConfigR, TangoConfigAtt))
         self._writable: bool = isinstance(self._cfg, (EpicsConfigRW, EpicsConfigW, TangoConfigAtt))
 
@@ -37,12 +40,15 @@ class OASignal(DeviceAccess):
             self.RB.__peer__ = self
 
     def get_cs(self) -> str:
+        """Return the backend identifier implemented by the subclass."""
         raise Exception("get_cs() not implemented")
 
     def name(self) -> str:
+        """Return the backend signal name."""
         return self._signal.name
 
     def measure_name(self) -> str:
+        """Return the configured process-variable or attribute name."""
         if isinstance(self._cfg, (EpicsConfigR, EpicsConfigRW)):
             return self._cfg.read_pvname
         elif isinstance(self._cfg, EpicsConfigW):
@@ -53,15 +59,23 @@ class OASignal(DeviceAccess):
             raise ValueError(f"Unsupported control system config type: {type(self._cfg)!r}")
 
     def unit(self) -> str:
+        """Return the configured engineering unit."""
         return self._cfg.unit
 
     def get_range(self) -> list:
+        """Return the configured numeric range, if any."""
         if isinstance(self._cfg, (EpicsConfigW, EpicsConfigRW, TangoConfigAtt)):
             if self._cfg.range:
                 return self._cfg.range
         return [None, None]
 
     def check_device_availability(self) -> bool:
+        """Return whether the device is available.
+
+        Notes
+        -----
+        The current implementation does not perform an active health check.
+        """
         # TODO
         return True
 
