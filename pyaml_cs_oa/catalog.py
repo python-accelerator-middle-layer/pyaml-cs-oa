@@ -18,7 +18,11 @@ class Catalog(metaclass=ABCMeta):
 
     @abstractmethod
     def resolve(self, key: str) -> BaseModel:
-        """
-        Return a configuration model for a DeviceAccess
+        """Return the configuration model associated with ``key``.
+
+        Parameters
+        ----------
+        key : str
+            Catalog key to resolve.
         """
         pass
