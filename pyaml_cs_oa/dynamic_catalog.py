@@ -1,15 +1,16 @@
 from typing import Tuple
 
 from pyaml.common.exception import PyAMLException
-from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import BaseModel, ConfigDict
+from pyaml.validation import DynamicValidation, register_schema
+from pydantic import BaseModel
 
 from .catalog import Catalog
 
 PYAMLCLASS = "DynamicCatalog"
 
 
-class ConfigModel(BaseModel):
+@register_schema
+class DynamicCatalog(Catalog, DynamicValidation):
     """
     Default dynamic catalog.
 
@@ -18,7 +19,7 @@ class ConfigModel(BaseModel):
 
     Supported key formats::
 
-    For EPCIS::
+    For EPICS::
 
     - ``READ_PV[unit]``                   → scalar read-only
     - ``(WRITE_PV)[unit]``                → scalar write-only
@@ -38,23 +39,19 @@ class ConfigModel(BaseModel):
         timeout_ms: 3000
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-    timeout_ms: int = 3000
-    backend: str = ""
+    def __init__(self, timeout_ms: int = 3000, backend: str = ""):
+        self._timeout_ms = timeout_ms
+        self._backend = backend
 
-
-class DynamicCatalog(Catalog):
-    def __init__(self, cfg: ConfigModel):
-        self._cfg = cfg
         self._dp = {}  # Device proxy cache (Tango Only)
-        if cfg.backend.lower() != "tango" and cfg.backend.lower() != "epics":
-            raise PyAMLException(f"backend must be `epics` or `tango` but got '{cfg.backend}'") from None
+        if self._backend.lower() != "tango" and self._backend.lower() != "epics":
+            raise PyAMLException(f"backend must be `epics` or `tango` but got '{self._backend}'") from None
 
     def resolve(self, key: str) -> BaseModel:
-        if self._cfg.backend.lower() == "epics":
-            return _build_epics_config(key, self._cfg.timeout_ms)
-        elif self._cfg.backend.lower() == "tango":
-            return _build_tango_config(key, self._cfg.timeout_ms)
+        if self._backend.lower() == "epics":
+            return _build_epics_config(key, self._timeout_ms)
+        elif self._backend.lower() == "tango":
+            return _build_tango_config(key, self._timeout_ms)
         else:
             return None
 
@@ -99,19 +96,17 @@ def _parse_pv(token: str) -> tuple[list[str], int | None, str, bool]:
     return name_list, index, unit, hasw
 
 
-def _build_epics_config(pv_str: str, timeout_ms: int) -> DeviceAccess:
-    from .epicsR import ConfigModel as EpicsRConfig
-    from .epicsRW import ConfigModel as EpicsRWConfig
-    from .epicsW import ConfigModel as EpicsWConfig
+def _build_epics_config(pv_str: str, timeout_ms: int) -> BaseModel:
+    from .types import EpicsConfigR, EpicsConfigRW, EpicsConfigW
 
     pv_names, index, unit, hasw = _parse_pv(pv_str)
     if len(pv_names) == 1:
         if hasw:
-            return EpicsWConfig(write_pvname=pv_names[0], timeout_ms=timeout_ms, index=index, unit=unit)
+            return EpicsConfigW(write_pvname=pv_names[0], timeout_ms=timeout_ms, index=index, unit=unit)
         else:
-            return EpicsRConfig(read_pvname=pv_names[0], timeout_ms=timeout_ms, index=index, unit=unit)
+            return EpicsConfigR(read_pvname=pv_names[0], timeout_ms=timeout_ms, index=index, unit=unit)
     if len(pv_names) == 2:
-        return EpicsRWConfig(read_pvname=pv_names[0], write_pvname=pv_names[1], timeout_ms=timeout_ms, index=index, unit=unit)
+        return EpicsConfigRW(read_pvname=pv_names[0], write_pvname=pv_names[1], timeout_ms=timeout_ms, index=index, unit=unit)
     raise PyAMLException(f"Too many comma-separated tokens in key '{pv_str}' (max 2)")
 
 
@@ -137,7 +132,7 @@ def _parse_attribute(token: str) -> tuple[list[str], int | None, str]:
 
 
 def _build_tango_config(att_name: str, timeout_ms: int) -> BaseModel:
-    from .tangoAtt import ConfigModel as TangoAtt
+    from .types import TangoConfigAtt
 
     att_name, index, unit = _parse_attribute(att_name)
-    return TangoAtt(attribute=att_name, timeout_ms=timeout_ms, index=index, unit=unit)
+    return TangoConfigAtt(attribute=att_name, timeout_ms=timeout_ms, index=index, unit=unit)

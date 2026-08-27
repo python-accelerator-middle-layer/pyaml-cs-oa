@@ -1,22 +1,17 @@
 from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import BaseModel, ConfigDict
+from pyaml.validation import DynamicValidation, register_schema
 
 PYAMLCLASS = "StaticCatalogEntry"
 
 
-class ConfigModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-
-    key: str
-    device: DeviceAccess
-
-
-class StaticCatalogEntry:
-    def __init__(self, cfg: ConfigModel):
-        self._cfg = cfg
+@register_schema
+class StaticCatalogEntry(DynamicValidation):
+    def __init__(self, key: str, device: DeviceAccess):
+        self._key = key
+        self._device = device
 
     def get_key(self) -> str:
-        return self._cfg.key
+        return self._key
 
     def get_device(self) -> DeviceAccess:
-        return self._cfg.device
+        return self._device

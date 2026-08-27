@@ -4,11 +4,8 @@ from .types import TangoConfigAtt
 PYAMLCLASS: str = "TangoRW"
 
 
-class ConfigModel(TangoConfigAtt): ...
-
-
 class TangoAtt(FloatSignalContainer):
-    def __init__(self, cfg: ConfigModel):
+    def __init__(self, cfg: TangoConfigAtt):
         super().__init__(cfg)
 
     def get_cs(self) -> str:
