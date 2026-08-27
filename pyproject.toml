@@ -57,6 +57,12 @@ dev = [
     "pytest",
 ]
 
+# Extra dependencies for documentation
+docs-extra = [
+    "ophyd-async[ca,pva]",
+    "ophyd-async[tango]",
+]
+
 [tool.ruff]
 line-length = 127
 target-version = "py311"
