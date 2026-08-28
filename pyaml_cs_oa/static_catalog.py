@@ -1,3 +1,5 @@
+"""Fixed-key catalog implementation for configured devices."""
+
 from pyaml.common.exception import PyAMLException
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel, ConfigDict
@@ -21,6 +23,8 @@ class ConfigModel(BaseModel):
 
 
 class StaticCatalog(Catalog):
+    """Resolve keys from a fixed set of configured device references."""
+
     def __init__(self, cfg: ConfigModel):
         self._cfg = cfg
         if not cfg.entries:
@@ -33,6 +37,7 @@ class StaticCatalog(Catalog):
             self._refs[key] = entry.get_device()
 
     def resolve(self, key: str) -> BaseModel:
+        """Resolve ``key`` to its device configuration model."""
         try:
             return self._refs[key]._cfg
         except KeyError as exc:

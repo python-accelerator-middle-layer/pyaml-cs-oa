@@ -1,3 +1,5 @@
+"""On-demand catalog and parsers for EPICS and Tango specifications."""
+
 from typing import Tuple
 
 from pyaml.common.exception import PyAMLException
@@ -16,7 +18,7 @@ class ConfigModel(BaseModel):
     The key passed to ``resolve()`` is the PV or Tango attribute specification string — no
     ``entries`` list required.  Resolutions are cached after the first call.
 
-    Supported key formats::
+    Supported key formats:
 
     For EPCIS::
 
@@ -34,6 +36,7 @@ class ConfigModel(BaseModel):
     Example
     -------
     .. code-block:: yaml
+
         backend: "Tango" or "Epics"
         timeout_ms: 3000
     """
@@ -44,6 +47,8 @@ class ConfigModel(BaseModel):
 
 
 class DynamicCatalog(Catalog):
+    """Resolve compact backend specifications into configuration models."""
+
     def __init__(self, cfg: ConfigModel):
         self._cfg = cfg
         self._dp = {}  # Device proxy cache (Tango Only)
@@ -51,6 +56,18 @@ class DynamicCatalog(Catalog):
             raise PyAMLException(f"backend must be `epics` or `tango` but got '{cfg.backend}'") from None
 
     def resolve(self, key: str) -> BaseModel:
+        """Resolve a backend specification string.
+
+        Parameters
+        ----------
+        key : str
+            EPICS PV or Tango attribute specification.
+
+        Returns
+        -------
+        pydantic.BaseModel
+            Backend-specific configuration model.
+        """
         if self._cfg.backend.lower() == "epics":
             return _build_epics_config(key, self._cfg.timeout_ms)
         elif self._cfg.backend.lower() == "tango":
@@ -60,6 +77,7 @@ class DynamicCatalog(Catalog):
 
 
 def _extract_unit(token: str) -> Tuple[str, str]:
+    """Extract an optional trailing ``[unit]`` block from a token."""
     # Extract unit block
     try:
         start_idx = token.index("[") + 1
@@ -73,6 +91,7 @@ def _extract_unit(token: str) -> Tuple[str, str]:
 
 
 def _parse_pv(token: str) -> tuple[list[str], int | None, str, bool]:
+    """Parse an EPICS specification into names, index, unit, and write flag."""
     token = token.strip()
 
     unit, token = _extract_unit(token)
@@ -100,6 +119,7 @@ def _parse_pv(token: str) -> tuple[list[str], int | None, str, bool]:
 
 
 def _build_epics_config(pv_str: str, timeout_ms: int) -> DeviceAccess:
+    """Build an EPICS configuration model from a specification string."""
     from .epicsR import ConfigModel as EpicsRConfig
     from .epicsRW import ConfigModel as EpicsRWConfig
     from .epicsW import ConfigModel as EpicsWConfig
@@ -119,6 +139,7 @@ def _build_epics_config(pv_str: str, timeout_ms: int) -> DeviceAccess:
 
 
 def _parse_attribute(token: str) -> tuple[list[str], int | None, str]:
+    """Parse a Tango attribute specification into name, index, and unit."""
     token = token.strip()
 
     unit, token = _extract_unit(token)
@@ -137,6 +158,7 @@ def _parse_attribute(token: str) -> tuple[list[str], int | None, str]:
 
 
 def _build_tango_config(att_name: str, timeout_ms: int) -> BaseModel:
+    """Build a Tango configuration model from a specification string."""
     from .tangoAtt import ConfigModel as TangoAtt
 
     att_name, index, unit = _parse_attribute(att_name)

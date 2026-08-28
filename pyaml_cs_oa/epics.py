@@ -1,3 +1,5 @@
+"""Factories for cached ophyd-async EPICS signals."""
+
 import numpy
 from ophyd_async.core import Array1D, SignalR, SignalRW, SignalW
 from ophyd_async.epics.signal import epics_signal_r, epics_signal_rw, epics_signal_w
@@ -17,6 +19,7 @@ ALL_RW = {}
 
 
 def create_signal_r(read_pv: str, timeout: float) -> SignalR:
+    """Create or retrieve a cached EPICS read signal."""
     if read_pv not in ALL_R:
         # Do not create same signal several times
         r_sig = epics_signal_r(
@@ -30,6 +33,7 @@ def create_signal_r(read_pv: str, timeout: float) -> SignalR:
 
 
 def create_signal_w(write_pv: str, timeout: float) -> SignalR:
+    """Create or retrieve a cached EPICS write signal."""
     if write_pv not in ALL_W:
         # Do not create same signal several times
         w_sig = epics_signal_w(
@@ -43,6 +47,7 @@ def create_signal_w(write_pv: str, timeout: float) -> SignalR:
 
 
 def create_signal_rw(read_pv: str, write_pv: str, timeout: float) -> SignalR:
+    """Create or retrieve a cached EPICS read/write signal."""
     key = read_pv + write_pv
     if key not in ALL_RW:
         # Do not create same signal several times
@@ -58,6 +63,7 @@ def create_signal_rw(read_pv: str, write_pv: str, timeout: float) -> SignalR:
 
 
 def get_SP_RB(cfg: ControlSysConfig) -> tuple[Setpoint | None, Readback | None]:
+    """Build setpoint and readback adapters for an EPICS configuration."""
     setpoint: Setpoint | None = None
     readback: Readback | None = None
 

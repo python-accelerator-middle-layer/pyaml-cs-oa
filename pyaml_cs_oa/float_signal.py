@@ -1,3 +1,5 @@
+"""Floating-point signal container implementation."""
+
 from pyaml.common.exception import PyAMLException
 
 from .signal import OASignal
@@ -13,6 +15,7 @@ class FloatSignalContainer(OASignal):
         super().__init__(cfg)
 
     def _indexed_float(self, value) -> float:
+        """Convert a backend value to a float, applying the configured index."""
         if self._cfg.index is None:
             try:
                 return float(value)

@@ -1,3 +1,5 @@
+"""Factories for ophyd-async Tango signals."""
+
 import numpy
 from ophyd_async.core import Array1D
 from ophyd_async.tango.core import tango_signal_r, tango_signal_rw
@@ -11,6 +13,7 @@ from .types import (
 
 
 def get_SP_RB(cfg: ControlSysConfig) -> tuple[Setpoint | None, Readback | None]:
+    """Build setpoint and readback adapters for a Tango configuration."""
     setpoint: Setpoint | None = None
     readback: Readback | None = None
 

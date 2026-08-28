@@ -1,5 +1,6 @@
+"""Shared asyncio utilities for the ophyd-async pyAML control-system plugin."""
+
 import asyncio
-import atexit
 import contextlib
 from typing import Any, Awaitable
 
@@ -11,6 +12,13 @@ _nest_asyncio_applied = False
 
 
 def loop() -> asyncio.AbstractEventLoop:
+    """Return the persistent event loop used by synchronous wrappers.
+
+    Returns
+    -------
+    asyncio.AbstractEventLoop
+        The currently running loop, or the package-managed loop.
+    """
     global _loop, _nest_asyncio_applied
 
     # Try to get the currently running loop (e.g., in Jupyter)
@@ -72,6 +80,18 @@ def _reap_done_tasks(evloop: asyncio.AbstractEventLoop) -> None:
 
 
 def arun(coro: Awaitable[Any]) -> Any:
+    """Run an awaitable to completion on the package event loop.
+
+    Parameters
+    ----------
+    coro : Awaitable[Any]
+        Awaitable to execute.
+
+    Returns
+    -------
+    Any
+        The awaitable's result.
+    """
     evloop = loop()
 
     try:
