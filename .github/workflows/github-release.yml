@@ -28,9 +28,22 @@ jobs:
       - name: Build distribution
         run: hatch build
 
+      - name: Determine whether this is a pre-release
+        id: release_type
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+
+          if [[ "$tag" =~ (\.dev[0-9]+|a[0-9]+|b[0-9]+|rc[0-9]+)$ ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create draft GitHub release
         uses: softprops/action-gh-release@v3
         with:
           draft: true
+          prerelease: ${{ steps.release_type.outputs.prerelease }}
           generate_release_notes: true
           files: dist/*
