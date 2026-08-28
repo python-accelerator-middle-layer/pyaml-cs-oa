@@ -4,8 +4,6 @@ import asyncio
 import contextlib
 from typing import Any, Awaitable
 
-__version__ = "0.1.2"
-
 # One persistent event loop
 _loop = None
 _nest_asyncio_applied = False
