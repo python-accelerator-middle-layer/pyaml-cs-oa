@@ -47,6 +47,7 @@ dev = [
     "ruff",
     "mypy",
     "pytest",
+    "copier"
 ]
 
 # Extra dependencies for documentation
