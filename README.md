@@ -1,14 +1,13 @@
 # pyaml-cs-oa
 
-**PyAML control system plugin for ophyd-async**
+**PyAML control system bindings using ophyd-async**
 
 [![Documentation Status](https://readthedocs.org/projects/pyaml-cs-oa/badge/?version=latest)](https://pyaml-cs-oa.readthedocs.io/en/latest/?badge=latest)
-[![Current release](https://img.shields.io/github/v/tag/python-accelerator-middle-layer/pyaml-cs-oa)](https://github.com/python-accelerator-middle-layer/pyaml-cs-oa/tags)
+[![Current release](https://img.shields.io/github/v/release/python-accelerator-middle-layer/pyaml-cs-oa)](https://github.com/python-accelerator-middle-layer/pyaml-cs-oa/releases)
 
 ## Overview
 
-`pyaml-cs-oa` provides `pyAML` control-system bindings based on
-`ophyd-async`. It currently supports EPICS and Tango control systems.
+`pyaml-cs-oa` provides `pyAML` control-system bindings using `ophyd-async`. It currently supports EPICS and Tango control systems.
 
 ## Installation
 
@@ -58,7 +57,7 @@ pre-commit install
 
 The documentation is available at:
 
-<https://pyaml-cs-oa.readthedocs.io/en/latest/>
+<https://pyaml-cs-oa.readthedocs.io/en/stable/>
 
 ## Contributing
 
