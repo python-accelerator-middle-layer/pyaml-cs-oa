@@ -1,10 +1,3 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.version]
-path = "pyaml_cs_oa/__init__.py"
-
 [project]
 name = "pyaml-cs-oa"
 description = "PyAML control system plugin for ophyd-async"
@@ -27,7 +20,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
-# Base dependencies (common to all installs)
 dependencies = [
     "accelerator-middle-layer>=0.2.2",
     "pydantic>=2.0",
@@ -35,6 +27,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+
+# Test-only dependencies
+test = [
+    "pytest",
+]
 
 # Optional EPICS support
 epics = ["ophyd-async[ca,pva]"]
@@ -50,10 +47,27 @@ dev = [
     "ruff",
     "mypy",
     "pytest",
+    "copier"
 ]
 
+# Extra dependencies for documentation
+docs-extra = [
+    "ophyd-async[ca,pva]",
+    "ophyd-async[tango]",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "pyaml_cs_oa/_version.py"
+
 [tool.ruff]
-line-length = 88
+line-length = 127
 target-version = "py311"
 
 [tool.ruff.lint]
@@ -70,6 +84,8 @@ ignore = [
     "E203",  # so it's compatible with black-style formatting
     "F401",  # unused imports
     "F841",  # unused local variables
+    "E741",  # ambiguous variable name
+    "B024",  # abstract class with no methods
 ]
 
 [tool.ruff.format]
@@ -77,6 +93,13 @@ line-ending = "lf"
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+markers = [
+    "integration: tests that require external accelerator or control-system infrastructure",
+    "requires_control_system: tests that require live EPICS or Tango services",
+]
 
 [tool.mypy]
 python_version = "3.11"

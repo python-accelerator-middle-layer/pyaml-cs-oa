@@ -1,62 +1,64 @@
-# `pyaml-cs-oa`
+# pyaml-cs-oa
 
-**PyAML control system plugin for ophyd-async**
+**PyAML control system bindings using ophyd-async**
 
-`pyaml-cs-oa` is a plugin for `PyAML` based on `ophyd-async`, which
-currently supports EPICS and Tango control systems.
+[![Documentation Status](https://readthedocs.org/projects/pyaml-cs-oa/badge/?version=latest)](https://pyaml-cs-oa.readthedocs.io/en/latest/?badge=latest)
+[![Current release](https://img.shields.io/github/v/release/python-accelerator-middle-layer/pyaml-cs-oa)](https://github.com/python-accelerator-middle-layer/pyaml-cs-oa/releases)
 
----
+## Overview
 
-## 🔧 Installation
+`pyaml-cs-oa` provides `pyAML` control-system bindings using `ophyd-async`. It currently supports EPICS and Tango control systems.
 
-### **Requirements**
+## Installation
 
-- Python **3.11+**
+Install the package from PyPI:
 
-- Depending on your runtime environment, you may want to install support for EPICS or Tango.
-
-### **EPICS CA/PVA Support**
-
+```bash
+pip install pyaml-cs-oa
 ```
+
+**EPICS CA/PVA Support**
+
+```bash
 pip install pyaml-cs-oa[epics]
 ```
 
-This installs:
+This adds the EPICS channel and PV access dependencies.
 
-- `ophyd-async[ca,pva]`
+**TANGO Support**
 
-### **Tango Support**
-
-```
+```bash
 pip install pyaml-cs-oa[tango]
 ```
 
-This installs:
+This adds the TANGO dependencies.
 
-- `ophyd-async[tango]`
+## Development
 
----
+Install the development dependencies with:
 
-## 🧪 Developer Installation
-
-If you are contributing, debugging, or running the test suite (no test
-currently provided):
-
-```
+```bash
 pip install pyaml-cs-oa[dev]
 ```
 
-This installs:
+Run the test suite with:
 
-- `ophyd-async[ca,pva]`
-- `ophyd-async[tango]`
-- `pre-commit`
-- `ruff`
-- `mypy`
-- `pytest`
-
-### Setup pre-commit hooks
-
+```bash
+pytest
 ```
+
+Install the pre-commit hooks with:
+
+```bash
 pre-commit install
 ```
+
+## Documentation
+
+The documentation is available at:
+
+<https://pyaml-cs-oa.readthedocs.io/en/stable/>
+
+## Contributing
+
+Please use the issue tracker or submit a pull request.

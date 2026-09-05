@@ -1,16 +1,24 @@
+"""Shared asyncio utilities for the ophyd-async pyAML control-system plugin."""
+
 import asyncio
 import contextlib
-from typing import Awaitable, Any
-import atexit
+from typing import Any, Awaitable
 
-__version__ = "0.1.2"
+from ._version import __version__
 
 # One persistent event loop
 _loop = None
 _nest_asyncio_applied = False
 
-def loop() -> asyncio.AbstractEventLoop:
 
+def loop() -> asyncio.AbstractEventLoop:
+    """Return the persistent event loop used by synchronous wrappers.
+
+    Returns
+    -------
+    asyncio.AbstractEventLoop
+        The currently running loop, or the package-managed loop.
+    """
     global _loop, _nest_asyncio_applied
 
     # Try to get the currently running loop (e.g., in Jupyter)
@@ -20,6 +28,7 @@ def loop() -> asyncio.AbstractEventLoop:
         if not _nest_asyncio_applied:
             try:
                 import nest_asyncio
+
                 nest_asyncio.apply(running_loop)
                 _nest_asyncio_applied = True
             except ImportError:
@@ -37,13 +46,17 @@ def loop() -> asyncio.AbstractEventLoop:
         if not _nest_asyncio_applied:
             try:
                 import nest_asyncio
+
                 nest_asyncio.apply(_loop)
                 _nest_asyncio_applied = True
             except ImportError:
                 pass
 
     return _loop
+
+
 loop()  # Make sure to initialize `_loop`
+
 
 def _reap_done_tasks(evloop: asyncio.AbstractEventLoop) -> None:
     """Reap exceptions from tasks that are already DONE on this loop.
@@ -67,7 +80,18 @@ def _reap_done_tasks(evloop: asyncio.AbstractEventLoop) -> None:
 
 
 def arun(coro: Awaitable[Any]) -> Any:
+    """Run an awaitable to completion on the package event loop.
 
+    Parameters
+    ----------
+    coro : Awaitable[Any]
+        Awaitable to execute.
+
+    Returns
+    -------
+    Any
+        The awaitable's result.
+    """
     evloop = loop()
 
     try:
@@ -76,4 +100,3 @@ def arun(coro: Awaitable[Any]) -> Any:
         # Clean up completed/cancelled tasks so residual CancelledError
         # doesn't leak to next run
         _reap_done_tasks(evloop)
-

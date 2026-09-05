@@ -1,13 +1,21 @@
+"""Read/write EPICS signal implementation."""
+
 from .float_signal import FloatSignalContainer
 from .types import EpicsConfigRW
 
-PYAMLCLASS : str = "EpicsRW"
+PYAMLCLASS: str = "EpicsRW"
+
 
 class ConfigModel(EpicsConfigRW):
-    unit: str = ""
+    """Configuration model registered for the ``EpicsRW`` device class."""
+
 
 class EpicsRW(FloatSignalContainer):
-    def __init__(self, cfg: ConfigModel, is_array=False):
-        super().__init__(cfg,is_array)
+    """PyAML read/write signal backed by an EPICS signal."""
+
+    def __init__(self, cfg: ConfigModel):
+        super().__init__(cfg)
+
     def get_cs(self) -> str:
-        return "epics"        
+        """Return the control-system identifier."""
+        return "epics"
