@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release:
-    name: Build and create draft release on GitHub
+    name: Build and create release on GitHub
     runs-on: ubuntu-latest
 
     steps:
