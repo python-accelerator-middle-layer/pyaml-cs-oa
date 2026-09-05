@@ -40,10 +40,10 @@ jobs:
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create draft GitHub release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          draft: true
+          draft: false
           prerelease: ${{ steps.release_type.outputs.prerelease }}
           generate_release_notes: true
           files: dist/*
