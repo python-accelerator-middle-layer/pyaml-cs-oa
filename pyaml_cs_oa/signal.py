@@ -34,7 +34,16 @@ class OASignal(DeviceAccess):
 
         self.SP, self.RB = get_SP_RB(self._cfg)
 
-        self._readable = self.SP
+        # FIXME: Find a way using Ophyd to get attribute config to see if the TangoAtt is R or RW
+        # rather than creating a DeviceProxy for nothing
+        # Work around the issue by checking that the setpoint is None
+        if isinstance(self._cfg, TangoConfigAtt):
+            try:
+                setpoint = self.SP.get()
+                if setpoint is None:
+                    self._writable = False
+            except Exception as ex:
+                ...
 
         if self.SP:
             self.SP.__peer__ = self
