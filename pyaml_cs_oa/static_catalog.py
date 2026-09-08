@@ -2,7 +2,8 @@
 
 from pyaml.common.exception import PyAMLException
 from pyaml.control.deviceaccess import DeviceAccess
-from pydantic import BaseModel, ConfigDict
+from pyaml.validation import DynamicValidation, register_schema
+from pydantic import BaseModel
 
 from .catalog import Catalog
 from .static_catalog_entry import StaticCatalogEntry
@@ -10,27 +11,21 @@ from .static_catalog_entry import StaticCatalogEntry
 PYAMLCLASS = "StaticCatalog"
 
 
-class ConfigModel(BaseModel):
+@register_schema
+class StaticCatalog(Catalog, DynamicValidation):
     """
     Static catalog: a fixed mapping of keys to DeviceAccess instances.
     Keys are resolved at construction time; no control-system connection is required.
     The catalog instance is shared across all control systems that reference it.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+    def __init__(self, entries: list[StaticCatalogEntry]):
+        self._entries = entries
 
-    entries: list[StaticCatalogEntry]
-
-
-class StaticCatalog(Catalog):
-    """Resolve keys from a fixed set of configured device references."""
-
-    def __init__(self, cfg: ConfigModel):
-        self._cfg = cfg
-        if not cfg.entries:
+        if not self._entries:
             raise PyAMLException("StaticCatalog.entries must contain at least one entry")
         self._refs: dict[str, DeviceAccess] = {}
-        for entry in cfg.entries:
+        for entry in self._entries:
             key = entry.get_key()
             if key in self._refs:
                 raise PyAMLException(f"StaticCatalog.entries contains duplicate key '{key}'")
