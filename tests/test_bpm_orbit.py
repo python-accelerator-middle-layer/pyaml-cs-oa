@@ -11,11 +11,9 @@ from pyaml.control.abstract_impl import RBpmArray
 from pyaml.control.deviceaccess import DeviceAccess
 from pydantic import BaseModel, ConfigDict
 
-from pyaml_cs_oa.controlsystem import ConfigModel, OphydAsyncControlSystem
+from pyaml_cs_oa.controlsystem import OphydAsyncControlSystem
 from pyaml_cs_oa.float_signal import FloatSignalContainer
-from pyaml_cs_oa.static_catalog import ConfigModel as StaticCatalogConfig
 from pyaml_cs_oa.static_catalog import StaticCatalog
-from pyaml_cs_oa.static_catalog_entry import ConfigModel as StaticCatalogEntryConfig
 from pyaml_cs_oa.static_catalog_entry import StaticCatalogEntry
 from pyaml_cs_oa.types import EpicsConfigR
 
@@ -94,7 +92,7 @@ class IdentityAttachControlSystem(OphydAsyncControlSystem):
     # attach public methods are depecrated
 
     def get_device_access(self, ref: str | BaseModel | None) -> DeviceAccess | None:
-        config = self._cfg.catalog.resolve(ref)
+        config = self._catalog.resolve(ref)
         return IndexedVectorSignal(config)
 
 
@@ -132,13 +130,13 @@ def _control_system_with_indexed_orbit(orbit_device: VectorDevice, bpm_count: in
         )
         entries.extend(
             [
-                StaticCatalogEntry(StaticCatalogEntryConfig(key=f"BPM{bpm_index}:X", device=IndexedVectorSignal(x_config))),
-                StaticCatalogEntry(StaticCatalogEntryConfig(key=f"BPM{bpm_index}:Y", device=IndexedVectorSignal(y_config))),
+                StaticCatalogEntry(key=f"BPM{bpm_index}:X", device=IndexedVectorSignal(x_config)),
+                StaticCatalogEntry(key=f"BPM{bpm_index}:Y", device=IndexedVectorSignal(y_config)),
             ],
         )
 
-    catalog = StaticCatalog(StaticCatalogConfig(entries=entries))
-    control_system = IdentityAttachControlSystem(ConfigModel(name="live", catalog=catalog))
+    catalog = StaticCatalog(entries=entries)
+    control_system = IdentityAttachControlSystem(name="live", catalog=catalog)
     return control_system
 
 
