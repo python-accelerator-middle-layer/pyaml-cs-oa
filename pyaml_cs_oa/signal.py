@@ -34,6 +34,8 @@ class OASignal(DeviceAccess):
 
         self.SP, self.RB = get_SP_RB(self._cfg)
 
+        self._readable = self.SP
+
         if self.SP:
             self.SP.__peer__ = self
         if self.RB:
@@ -45,7 +47,14 @@ class OASignal(DeviceAccess):
 
     def name(self) -> str:
         """Return the backend signal name."""
-        return self._signal.name
+        if isinstance(self._cfg, EpicsConfigR):
+            return self._cfg.read_pvname
+        elif isinstance(self._cfg, (EpicsConfigW, EpicsConfigRW)):
+            return self._cfg.write_pvname
+        elif isinstance(self._cfg, TangoConfigAtt):
+            return self._cfg.attribute
+        else:
+            raise ValueError(f"Unsupported control system config type: {type(self._cfg)!r}")
 
     def measure_name(self) -> str:
         """Return the configured process-variable or attribute name."""
