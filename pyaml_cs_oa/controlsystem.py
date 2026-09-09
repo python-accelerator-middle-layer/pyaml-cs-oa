@@ -136,7 +136,7 @@ class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
 
                 if key not in self._devices:
                     n_conf = dict(sig_cfg) | config
-                    nr = sig_cls(sig_cfg_cls(**n_conf))
+                    nr = sig_cls(**n_conf)
                     nr.build()
                     self._devices[key] = nr
 
