@@ -1,6 +1,8 @@
-from ophyd_async.epics.signal import epics_signal_r, epics_signal_w, epics_signal_rw
-from ophyd_async.core import Array1D
+"""Factories for cached ophyd-async EPICS signals."""
+
 import numpy
+from ophyd_async.core import Array1D, SignalR, SignalRW, SignalW
+from ophyd_async.epics.signal import epics_signal_r, epics_signal_rw, epics_signal_w
 
 from .container import OAReadback as Readback
 from .container import OASetpoint as Setpoint
@@ -11,43 +13,75 @@ from .types import (
     EpicsConfigW,
 )
 
+ALL_R = {}
+ALL_W = {}
+ALL_RW = {}
 
-def get_SP_RB(cfg: ControlSysConfig,is_array:bool) -> tuple[Setpoint | None, Readback | None]:
+
+def create_signal_r(read_pv: str, timeout: float) -> SignalR:
+    """Create or retrieve a cached EPICS read signal."""
+    if read_pv not in ALL_R:
+        # Do not create same signal several times
+        r_sig = epics_signal_r(
+            datatype=None,
+            read_pv=read_pv,
+            name=read_pv,
+            timeout=timeout,
+        )
+        ALL_R[read_pv] = r_sig
+    return ALL_R[read_pv]
+
+
+def create_signal_w(write_pv: str, timeout: float) -> SignalR:
+    """Create or retrieve a cached EPICS write signal."""
+    if write_pv not in ALL_W:
+        # Do not create same signal several times
+        w_sig = epics_signal_w(
+            datatype=None,
+            write_pv=write_pv,
+            name=write_pv,
+            timeout=timeout,
+        )
+        ALL_W[write_pv] = w_sig
+    return ALL_W[write_pv]
+
+
+def create_signal_rw(read_pv: str, write_pv: str, timeout: float) -> SignalR:
+    """Create or retrieve a cached EPICS read/write signal."""
+    key = read_pv + write_pv
+    if key not in ALL_RW:
+        # Do not create same signal several times
+        rw_sig = epics_signal_rw(
+            datatype=None,
+            read_pv=read_pv,
+            write_pv=write_pv,
+            name=read_pv,
+            timeout=timeout,
+        )
+        ALL_RW[key] = rw_sig
+    return ALL_RW[key]
+
+
+def get_SP_RB(cfg: ControlSysConfig) -> tuple[Setpoint | None, Readback | None]:
+    """Build setpoint and readback adapters for an EPICS configuration."""
     setpoint: Setpoint | None = None
     readback: Readback | None = None
 
     assert isinstance(cfg, (EpicsConfigRW, EpicsConfigR, EpicsConfigW))
 
     if isinstance(cfg, EpicsConfigR):
-        r_sig = epics_signal_r(
-            datatype=float if not is_array else Array1D[numpy.float64],
-            read_pv=cfg.read_pvname,
-            name="",
-            timeout = cfg.timeout_ms / 1000.,
-        )
+        r_sig = create_signal_r(cfg.read_pvname, cfg.timeout_ms / 1000.0)
         readback = Readback(r_sig)
         setpoint = None
 
     if isinstance(cfg, EpicsConfigW):
-        w_sig = epics_signal_w(
-            datatype=float if not is_array else Array1D[numpy.float64],
-            write_pv=cfg.write_pvname,
-            name="",
-            timeout = cfg.timeout_ms / 1000.,
-        )
+        w_sig = create_signal_w(cfg.write_pvname, cfg.timeout_ms / 1000.0)
         readback = None
         setpoint = Setpoint(w_sig)
 
     if isinstance(cfg, EpicsConfigRW):
-        w_sig = epics_signal_rw(
-            datatype=float if not is_array else Array1D[numpy.float64],
-            read_pv=cfg.read_pvname,
-            write_pv=cfg.write_pvname,
-            name="",
-            timeout = cfg.timeout_ms / 1000.,
-        )
-        readback = Readback(w_sig)
-        setpoint = Setpoint(w_sig)
-
+        rw_sig = create_signal_rw(cfg.read_pvname, cfg.write_pvname, cfg.timeout_ms / 1000.0)
+        readback = Readback(rw_sig)
+        setpoint = Setpoint(rw_sig)
 
     return setpoint, readback
