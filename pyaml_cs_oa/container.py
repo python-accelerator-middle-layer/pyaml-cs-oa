@@ -61,7 +61,6 @@ class OAReadback:
         """Connect and fetch the backend's current value."""
         await self._r_sig.connect()
         backend = self._r_sig._connector.backend
-        print(f"Read {self._r_sig.name}")
         return await backend.get_value()
 
     async def async_get(self) -> SignalDatatypeT:

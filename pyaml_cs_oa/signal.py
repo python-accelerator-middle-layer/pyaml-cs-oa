@@ -34,6 +34,17 @@ class OASignal(DeviceAccess):
 
         self.SP, self.RB = get_SP_RB(self._cfg)
 
+        # FIXME: Find a way using Ophyd to get attribute config to see if the TangoAtt is R or RW
+        # rather than creating a DeviceProxy for nothing
+        # Work around the issue by checking that the setpoint is None
+        if isinstance(self._cfg, TangoConfigAtt):
+            try:
+                setpoint = self.SP.get()
+                if setpoint is None:
+                    self._writable = False
+            except Exception as ex:
+                ...
+
         if self.SP:
             self.SP.__peer__ = self
         if self.RB:
@@ -45,7 +56,14 @@ class OASignal(DeviceAccess):
 
     def name(self) -> str:
         """Return the backend signal name."""
-        return self._signal.name
+        if isinstance(self._cfg, EpicsConfigR):
+            return self._cfg.read_pvname
+        elif isinstance(self._cfg, (EpicsConfigW, EpicsConfigRW)):
+            return self._cfg.write_pvname
+        elif isinstance(self._cfg, TangoConfigAtt):
+            return self._cfg.attribute
+        else:
+            raise ValueError(f"Unsupported control system config type: {type(self._cfg)!r}")
 
     def measure_name(self) -> str:
         """Return the configured process-variable or attribute name."""
