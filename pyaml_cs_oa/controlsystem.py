@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from . import __version__
 from .aggregator import OAAggregator
 from .catalog import Catalog
+from .dynamic_catalog import DynamicCatalog
 from .epicsR import EpicsR
 from .epicsRW import EpicsRW
 from .epicsW import EpicsW
@@ -33,6 +34,8 @@ class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
         self,
         name: str,
         prefix: str = "",
+        backend: str | None = None,
+        timeout_ms: int = 3000,
         catalog: Catalog | None = None,
         debug_level: str | int | None = None,
     ):
@@ -45,9 +48,13 @@ class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
         prefix : str, optional
             Prefix added to the PV or attribute name. It can be a
             for instance, TANGO_HOST, or a PV prefix.
+        backend: str
+            Type of backend (Tango or EPCIS) to use when no catalog is specified.
+        timeout_ms: int
+            Default hardware access timeout in milliseconds.
         catalog : Catalog or None, optional
             Catalog instance or catalog name used to resolve PyAML device keys.
-            If None specified a dynamic catalog is used.
+            If None specified a dynamic catalog is used according to backend property.
         debug_level : str | int | None, optional
             Debug verbosity level. Such as INFO, DEBUG, WARNING, ERROR, CRITICAL. Or 10, 20, 30, 40, 50.
         """
@@ -55,8 +62,10 @@ class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
         super().__init__()
         self._name = name
         self._prefix = prefix
+        self._backend = backend
         self._catalog = catalog
         self._debug_level = debug_level
+        self._timeout_ms = timeout_ms
         self._devices: dict[str, DeviceAccess] = {}  # Dict containing all attached DeviceAccess
 
         if self._debug_level:
@@ -68,6 +77,12 @@ class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
             f"PyAML OA control system binding ({__version__}) initialized with name '{self._name}'"
             f" and prefix='{self._prefix}'",
         )
+
+        if self._catalog is None:
+            if self._backend is None:
+                raise PyAMLException("When no catalog is specified, you have to specify which type of backend to use.")
+            else:
+                self._catalog = DynamicCatalog(backend=self._backend, timeout_ms=self._timeout_ms)
 
     def attach(self, devs: list[OASignal | None]) -> list[OASignal | None]:
         """Attach configured signals; retained for compatibility."""
@@ -161,4 +176,4 @@ class OphydAsyncControlSystem(ControlSystem, DynamicValidation):
         return OAAggregator()
 
     def __repr__(self):
-        return __pyaml_repr__()
+        return __pyaml_repr__(self)
