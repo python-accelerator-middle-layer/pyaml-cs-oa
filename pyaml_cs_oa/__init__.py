@@ -51,9 +51,14 @@ def loop() -> asyncio.AbstractEventLoop:
         # Apply nest_asyncio to our new loop
         if not _nest_asyncio_applied:
             try:
-                import nest_asyncio
+                if sys.version_info >= (3, 13):
+                    import nest_asyncio2
 
-                nest_asyncio.apply(_loop)
+                    nest_asyncio2.apply(running_loop)
+                else:
+                    import nest_asyncio
+
+                    nest_asyncio.apply(_loop)
                 _nest_asyncio_applied = True
             except ImportError:
                 pass
