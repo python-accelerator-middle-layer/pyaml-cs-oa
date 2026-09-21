@@ -54,7 +54,7 @@ def loop() -> asyncio.AbstractEventLoop:
                 if sys.version_info >= (3, 13):
                     import nest_asyncio2
 
-                    nest_asyncio2.apply(running_loop)
+                    nest_asyncio2.apply(_loop)
                 else:
                     import nest_asyncio
 
