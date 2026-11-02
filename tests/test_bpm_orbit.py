@@ -2,7 +2,7 @@ from typing import Any
 
 import numpy as np
 from pyaml.arrays.bpm_array import BPMArray
-from pyaml.bpm.bpm import BPM
+from pyaml.diagnostics.bpm.bpm import BPM
 
 # from pyaml.bpm.bpm import ConfigModel as BPMConfig
 # from pyaml.bpm.bpm_simple_model import BPMSimpleModel
